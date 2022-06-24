@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package tachibanapb;
+
+option go_package = "./;tachibanapb";
+
+import "google/protobuf/timestamp.proto";
+
+service TachibanaService {
+  rpc Login(LoginRequest) returns (LoginResponse); // ログイン
+}
+
+message LoginRequest {
+  string user_id = 1; // ユーザID
+  string password = 2; // パスワード
+}
+
+message LoginResponse {
+  string result_code = 1; // 結果コード
+  string result_text = 2; // 結果テキスト
+  AccountType account_type = 3; // 譲渡益課税区分
+  bool second_password_omit = 4; // 暗証番号省略有無C
+  google.protobuf.Timestamp last_login_datetime = 5; // 最終ログイン日時
+  bool general_account = 6; // 総合口座開設区分
+  bool safekeeping_account = 7; // 保護預り口座開設区分
+  bool transfer_account = 8; // 振替決済口座開設区分
+  bool foreign_account = 9; // 外国口座開設区分
+  bool mrf_account = 10; // MRF口座開設区分
+  SpecificAccountType stock_specific_account = 11; // 特定口座区分現物
+  SpecificAccountType margin_specific_account = 12; // 特定口座区分信用
+  SpecificAccountType investment_specific_account = 13; // 特定口座区分投信
+  bool dividend_account = 14; // 配当特定口座区分
+  bool specific_account = 15; // 特定管理口座開設区分
+  bool margin_account = 16; // 信用取引口座開設区分
+  bool future_option_account = 17; // 先物OP口座開設区分
+  bool mmf_account = 18; // MMF口座開設区分
+  bool china_foreign_account = 19; // 中国F口座開設区分
+  bool fx_account = 20; // 為替保証金口座開設区分
+  bool nisa_account = 21; // 非課税口座開設区分
+  bool unread_document = 22; // 金商法交付書面未読フラグ
+  string token = 23; // トークン
+}
+
+enum AccountType {
+  ACCOUNT_TYPE_UNSPECIFIED = 0; // 未指定
+  ACCOUNT_TYPE_SPECIFIC = 1; // 特定
+  ACCOUNT_TYPE_GENERAL = 2; // 一般
+  ACCOUNT_TYPE_NISA = 3; // NISA
+}
+
+enum SpecificAccountType {
+  SPECIFIC_ACCOUNT_TYPE_UNSPECIFIED = 0; // 未指定
+  SPECIFIC_ACCOUNT_TYPE_GENERAL = 1; // 一般
+  SPECIFIC_ACCOUNT_TYPE_NOTHING = 2; // 特定源泉徴収なし
+  SPECIFIC_ACCOUNT_TYPE_WITHHOLDING = 3; // 特定源泉徴収あり
+}
