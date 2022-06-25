@@ -10,35 +10,102 @@ service TachibanaService {
   rpc Login(LoginRequest) returns (LoginResponse); // ログイン
 }
 
+message CommonResponse {
+  int64 No = 1; // 送信通番
+  google.protobuf.Timestamp send_date = 2; // 送信日時
+  google.protobuf.Timestamp receive_date = 3; // 受信日時
+  ErrorNo error_no = 4; // エラー番号
+  string error_message = 5; // エラー文言
+  MessageType message_type = 6; // 機能ID
+}
+
 message LoginRequest {
   string user_id = 1; // ユーザID
   string password = 2; // パスワード
 }
 
 message LoginResponse {
-  string result_code = 1; // 結果コード
-  string result_text = 2; // 結果テキスト
-  AccountType account_type = 3; // 譲渡益課税区分
-  bool second_password_omit = 4; // 暗証番号省略有無C
-  google.protobuf.Timestamp last_login_datetime = 5; // 最終ログイン日時
-  bool general_account = 6; // 総合口座開設区分
-  bool safekeeping_account = 7; // 保護預り口座開設区分
-  bool transfer_account = 8; // 振替決済口座開設区分
-  bool foreign_account = 9; // 外国口座開設区分
-  bool mrf_account = 10; // MRF口座開設区分
-  SpecificAccountType stock_specific_account = 11; // 特定口座区分現物
-  SpecificAccountType margin_specific_account = 12; // 特定口座区分信用
-  SpecificAccountType investment_specific_account = 13; // 特定口座区分投信
-  bool dividend_account = 14; // 配当特定口座区分
-  bool specific_account = 15; // 特定管理口座開設区分
-  bool margin_account = 16; // 信用取引口座開設区分
-  bool future_option_account = 17; // 先物OP口座開設区分
-  bool mmf_account = 18; // MMF口座開設区分
-  bool china_foreign_account = 19; // 中国F口座開設区分
-  bool fx_account = 20; // 為替保証金口座開設区分
-  bool nisa_account = 21; // 非課税口座開設区分
-  bool unread_document = 22; // 金商法交付書面未読フラグ
-  string token = 23; // トークン
+  CommonResponse common_response = 1; // レスポンス共通項目
+  string result_code = 2; // 結果コード
+  string result_text = 3; // 結果テキスト
+  AccountType account_type = 4; // 譲渡益課税区分
+  bool second_password_omit = 5; // 暗証番号省略有無C
+  google.protobuf.Timestamp last_login_datetime = 6; // 最終ログイン日時
+  bool general_account = 7; // 総合口座開設区分
+  bool safekeeping_account = 8; // 保護預り口座開設区分
+  bool transfer_account = 9; // 振替決済口座開設区分
+  bool foreign_account = 10; // 外国口座開設区分
+  bool mrf_account = 11; // MRF口座開設区分
+  SpecificAccountType stock_specific_account = 12; // 特定口座区分現物
+  SpecificAccountType margin_specific_account = 13; // 特定口座区分信用
+  SpecificAccountType investment_specific_account = 14; // 特定口座区分投信
+  bool dividend_account = 15; // 配当特定口座区分
+  bool specific_account = 16; // 特定管理口座開設区分
+  bool margin_account = 17; // 信用取引口座開設区分
+  bool future_option_account = 18; // 先物OP口座開設区分
+  bool mmf_account = 19; // MMF口座開設区分
+  bool china_foreign_account = 20; // 中国F口座開設区分
+  bool fx_account = 21; // 為替保証金口座開設区分
+  bool nisa_account = 22; // 非課税口座開設区分
+  bool unread_document = 23; // 金商法交付書面未読フラグ
+  string token = 24; // トークン
+}
+
+enum ErrorNo {
+  ERROR_NO_UNSPECIFIED = 0; // 未指定
+  ERROR_NO_NO_PROBLEM = 1; // 問題なし
+  ERROR_NO_NO_DATA = 2; // データなし
+  ERROR_NO_SESSION_INACTIVE = 3 ; // 無効なセッション
+  ERROR_NO_PROGRESSED_NUMBER = 4; // 処理済みの送信通番
+  ERROR_NO_EXCEED_LIMIT_TIME = 5; // 送信日時からみたタイムアウト
+  ERROR_NO_SERVICE_OFFLINE = 6; // サービス停止中
+  ERROR_NO_BAD_REQUEST = 7; // 引数エラー
+  ERROR_NO_DATABASE_ACCESS = 8; // データベースへのアクセスエラー
+  ERROR_NO_SERVER_ACCESS = 9; // サーバへのアクセスエラー
+  ERROR_NO_SYSTEM_OFFLINE = 10; // システム停止中
+  ERROR_NO_OFF_HOURS = 11; // 情報提供時間外
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0; // 未指定
+  MESSAGE_TYPE_LOGIN_REQUEST = 1; // ログインリクエスト
+  MESSAGE_TYPE_LOGIN_RESPONSE = 2; // ログインレスポンス
+  MESSAGE_TYPE_LOGOUT_REQUEST = 3; // ログアウトリクエスト
+  MESSAGE_TYPE_LOGOUT_RESPONSE = 4; // ログアウトレスポンス
+  MESSAGE_TYPE_NEW_ORDER = 5; // 新規注文
+  MESSAGE_TYPE_CORRECT_ORDER = 6; // 訂正注文
+  MESSAGE_TYPE_CANCEL_ORDER = 7; // 取消注文
+  MESSAGE_TYPE_STOCK_POSITION_LIST = 8; // 現物保有銘柄一覧
+  MESSAGE_TYPE_MARGIN_POSITION_LIST = 9; // 信用建玉一覧
+  MESSAGE_TYPE_STOCK_WALLET = 10; // 買余力
+  MESSAGE_TYPE_MARGIN_WALLET = 11; // 建余力&本日維持率
+  MESSAGE_TYPE_STOCK_SELLABLE = 12; // 売却可能数量
+  MESSAGE_TYPE_ORDER_LIST = 13; // 注文一覧
+  MESSAGE_TYPE_ORDER_DETAIL = 14; // 注文約定一覧(詳細)
+  MESSAGE_TYPE_SUMMARY = 15; // 可能額サマリー
+  MESSAGE_TYPE_SUMMARY_RECORD = 16; // 可能額推移
+  MESSAGE_TYPE_STOCK_ENTRY_DETAIL = 17; // 現物株式買付可能額詳細
+  MESSAGE_TYPE_MARGIN_ENTRY_DETAIL = 18; // 信用新規建て可能額詳細
+  MESSAGE_TYPE_DEPOSIT_RATE = 19; // リアル保証金率
+  MESSAGE_TYPE_EVENT_DOWNLOAD = 20; // マスタ情報ダウンロード
+  MESSAGE_TYPE_EVENT_SYSTEM_STATUS = 21; // システムステータス
+  MESSAGE_TYPE_BUSINESS_DAY = 22; // 日付情報
+  MESSAGE_TYPE_TICK_GROUP = 23; // 呼値
+  MESSAGE_TYPE_EVENT_OPERATION_STATUS = 24; // 運用ステータス別状態
+  MESSAGE_TYPE_EVENT_STOCK_OPERATION_STATUS = 25; // 運用ステータス(株式)
+  MESSAGE_TYPE_EVENT_PRODUCT_OPERATION_STATUS = 26; // 運用運用ステータス(派生)
+  MESSAGE_TYPE_STOCK_MASTER = 27; // 株式銘柄マスタ
+  MESSAGE_TYPE_STOCK_EXCHANGE_MASTER = 28; // 株式銘柄市場マスタ
+  MESSAGE_TYPE_EVENT_STOCK_REGULATION = 29; // 株式銘柄別・市場別規制
+  MESSAGE_TYPE_EVENT_FUTURE_MASTER = 30; // 先物銘柄マスタ
+  MESSAGE_TYPE_EVENT_OPTION_MASTER = 31; // オプション銘柄マスタ
+  MESSAGE_TYPE_EVENT_EXCHANGE_REGULATION = 32; // 派生銘柄別・市場別規制
+  MESSAGE_TYPE_EVENT_SUBSTITUTE = 33; // 代用掛目
+  MESSAGE_TYPE_EVENT_DEPOSIT_MASTER = 34; // 保証金マスタ
+  MESSAGE_TYPE_EVENT_ERROR_REASON = 35; // 取引所エラー等理由コード
+  MESSAGE_TYPE_EVENT_DOWNLOAD_COMPLETE = 36; // 初期ダウンロード終了通知
+  MESSAGE_TYPE_MASTER_DATA = 37; // マスタ情報
+  MESSAGE_TYPE_MARKET_PRICE = 38; // 時価関連情報
 }
 
 enum AccountType {
