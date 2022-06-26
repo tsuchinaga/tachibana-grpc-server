@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/metadata"
+
 	tachibana "gitlab.com/tsuchinaga/go-tachibanaapi"
 
 	pb "gitlab.com/tsuchinaga/tachibana-grpc-server/tachibanapb"
@@ -76,6 +78,56 @@ func Test_server_Login(t *testing.T) {
 				t.Errorf("%s error\nwant: %+v, %+v, %+v\ngot: %+v, %+v, %+v\n", t.Name(),
 					test.want1, test.want2, test.wantSave,
 					got1, got2, test.sessionStore.saveHistory)
+			}
+		})
+	}
+}
+
+func Test_server_getSession(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		arg1Func     func() context.Context
+		want1        *loginSession
+		want2        bool
+	}{
+		{name: "metadataのないcontextを渡したらfalse",
+			sessionStore: &testSessionStore{},
+			arg1Func:     func() context.Context { return context.Background() },
+			want1:        nil,
+			want2:        false},
+		{name: "session-tokenがメタデータになければfalse",
+			sessionStore: &testSessionStore{},
+			arg1Func: func() context.Context {
+				return metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))
+			},
+			want1: nil,
+			want2: false},
+		{name: "session-tokenがあっても、sessionStoreになければfalse",
+			sessionStore: &testSessionStore{},
+			arg1Func: func() context.Context {
+				return metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))
+			},
+			want1: nil,
+			want2: false},
+		{name: "session-tokenがあって、sessionStoreにtokenがあれば、loginSessionを返す",
+			sessionStore: &testSessionStore{getSession1: &loginSession{response: &pb.LoginResponse{Token: "token001"}}},
+			arg1Func: func() context.Context {
+				return metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))
+			},
+			want1: &loginSession{response: &pb.LoginResponse{Token: "token001"}},
+			want2: true},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore}
+			got1, got2 := server.getSession(test.arg1Func())
+			if !reflect.DeepEqual(test.want1, got1) || !reflect.DeepEqual(test.want2, got2) {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.want2, got1, got2)
 			}
 		})
 	}

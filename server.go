@@ -3,6 +3,8 @@ package tachibana_grpc_server
 import (
 	"context"
 
+	"google.golang.org/grpc/metadata"
+
 	tachibana "gitlab.com/tsuchinaga/go-tachibanaapi"
 	pb "gitlab.com/tsuchinaga/tachibana-grpc-server/tachibanapb"
 )
@@ -56,4 +58,24 @@ func (s *server) withErrorDetail(err error) error {
 	default:
 		return e
 	}
+}
+
+func (s *server) getSession(ctx context.Context) (*loginSession, bool) {
+	const SessionHeaderKey = "session-token" // リクエストヘッダに付けられる認証トークン名
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, false
+	}
+
+	tokens := md[SessionHeaderKey]
+	if len(tokens) == 0 {
+		return nil, false
+	}
+
+	session := s.sessionStore.getSession(tokens[0])
+	if session == nil {
+		return nil, false
+	}
+	return session, true
 }
