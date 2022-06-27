@@ -29,7 +29,7 @@ func Test_server_Login(t *testing.T) {
 	}{
 		{name: "sessionStoreから取得出来たら、取得した情報を返す",
 			clock:        &testClock{today1: time.Date(2022, 6, 24, 0, 0, 0, 0, time.Local)},
-			sessionStore: &testSessionStore{getSession1: &loginSession{response: &pb.LoginResponse{Token: "token001"}}},
+			sessionStore: &testSessionStore{getSession1: &accountSession{response: &pb.LoginResponse{Token: "token001"}}},
 			tachibanaApi: &testTachibanaApi{},
 			arg1:         context.Background(),
 			arg2:         &pb.LoginRequest{UserId: "user-id", Password: "password"},
@@ -48,7 +48,7 @@ func Test_server_Login(t *testing.T) {
 		{name: "ログイン処理でエラーでなくても、ログインに失敗していたら保存せず結果を返す",
 			clock:        &testClock{today1: time.Date(2022, 6, 24, 0, 0, 0, 0, time.Local)},
 			sessionStore: &testSessionStore{getSession1: nil},
-			tachibanaApi: &testTachibanaApi{login1: &loginSession{session: nil, response: &pb.LoginResponse{ResultCode: "0"}}},
+			tachibanaApi: &testTachibanaApi{login1: &accountSession{session: nil, response: &pb.LoginResponse{ResultCode: "0"}}},
 			arg1:         context.Background(),
 			arg2:         &pb.LoginRequest{UserId: "user-id", Password: "password"},
 			want1:        &pb.LoginResponse{ResultCode: "0", Token: ""},
@@ -57,14 +57,14 @@ func Test_server_Login(t *testing.T) {
 		{name: "ログイン処理で成功していたらsessionを保存して結果を返す",
 			clock:        &testClock{today1: time.Date(2022, 6, 24, 0, 0, 0, 0, time.Local)},
 			sessionStore: &testSessionStore{getSession1: nil},
-			tachibanaApi: &testTachibanaApi{login1: &loginSession{session: &tachibana.Session{}, response: &pb.LoginResponse{ResultCode: "0"}}},
+			tachibanaApi: &testTachibanaApi{login1: &accountSession{session: &tachibana.Session{}, response: &pb.LoginResponse{ResultCode: "0"}}},
 			arg1:         context.Background(),
 			arg2:         &pb.LoginRequest{UserId: "user-id", Password: "password"},
 			want1:        &pb.LoginResponse{ResultCode: "0", Token: "df8dacf6e2a94335c0fc8b1a1a05601c72152f0f30905feffcb45f74fe20ad00"},
 			want2:        nil,
 			wantSave: []interface{}{
 				"df8dacf6e2a94335c0fc8b1a1a05601c72152f0f30905feffcb45f74fe20ad00",
-				&loginSession{session: &tachibana.Session{}, response: &pb.LoginResponse{ResultCode: "0", Token: "df8dacf6e2a94335c0fc8b1a1a05601c72152f0f30905feffcb45f74fe20ad00"}},
+				&accountSession{token: "df8dacf6e2a94335c0fc8b1a1a05601c72152f0f30905feffcb45f74fe20ad00", session: &tachibana.Session{}, response: &pb.LoginResponse{ResultCode: "0", Token: "df8dacf6e2a94335c0fc8b1a1a05601c72152f0f30905feffcb45f74fe20ad00"}},
 			}},
 	}
 
@@ -89,7 +89,7 @@ func Test_server_getSession(t *testing.T) {
 		name         string
 		sessionStore *testSessionStore
 		arg1Func     func() context.Context
-		want1        *loginSession
+		want1        *accountSession
 		want2        bool
 	}{
 		{name: "metadataのないcontextを渡したらfalse",
@@ -112,11 +112,11 @@ func Test_server_getSession(t *testing.T) {
 			want1: nil,
 			want2: false},
 		{name: "session-tokenがあって、sessionStoreにtokenがあれば、loginSessionを返す",
-			sessionStore: &testSessionStore{getSession1: &loginSession{response: &pb.LoginResponse{Token: "token001"}}},
+			sessionStore: &testSessionStore{getSession1: &accountSession{response: &pb.LoginResponse{Token: "token001"}}},
 			arg1Func: func() context.Context {
 				return metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))
 			},
-			want1: &loginSession{response: &pb.LoginResponse{Token: "token001"}},
+			want1: &accountSession{response: &pb.LoginResponse{Token: "token001"}},
 			want2: true},
 	}
 
@@ -128,6 +128,61 @@ func Test_server_getSession(t *testing.T) {
 			got1, got2 := server.getSession(test.arg1Func())
 			if !reflect.DeepEqual(test.want1, got1) || !reflect.DeepEqual(test.want2, got2) {
 				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.want2, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_Logout(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name              string
+		sessionStore      *testSessionStore
+		tachibanaApi      *testTachibanaApi
+		arg1              context.Context
+		arg2              *pb.LogoutRequest
+		want1             *pb.LogoutResponse
+		hasError          bool
+		wantSessionRemove []interface{}
+	}{
+		{name: "sessionがなければエラー",
+			sessionStore:      &testSessionStore{getSession1: nil},
+			tachibanaApi:      &testTachibanaApi{},
+			arg1:              metadata.NewIncomingContext(context.Background(), metadata.Pairs("foo", "bar")),
+			arg2:              &pb.LogoutRequest{},
+			want1:             nil,
+			hasError:          true,
+			wantSessionRemove: nil},
+		{name: "logoutでエラーがあればエラー",
+			sessionStore:      &testSessionStore{getSession1: &accountSession{token: "token001", session: &tachibana.Session{RequestURL: "request-url"}}},
+			tachibanaApi:      &testTachibanaApi{logout2: unknownErr},
+			arg1:              metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:              &pb.LogoutRequest{},
+			want1:             nil,
+			hasError:          true,
+			wantSessionRemove: nil},
+		{name: "logoutに成功すればstoreから消してレスポンスを返す",
+			sessionStore:      &testSessionStore{getSession1: &accountSession{token: "token001", session: &tachibana.Session{RequestURL: "request-url"}}},
+			tachibanaApi:      &testTachibanaApi{logout1: &pb.LogoutResponse{ResultCode: "0"}},
+			arg1:              metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:              &pb.LogoutRequest{},
+			want1:             &pb.LogoutResponse{ResultCode: "0"},
+			hasError:          false,
+			wantSessionRemove: []interface{}{"token001"}},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{tachibana: test.tachibanaApi, sessionStore: test.sessionStore}
+			got1, got2 := server.Logout(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) ||
+				(got2 != nil) != test.hasError ||
+				!reflect.DeepEqual(test.wantSessionRemove, test.sessionStore.removeHistory) {
+				t.Errorf("%s error\nwant: %+v, %+v, %+v\ngot: %+v, %+v, %+v\n", t.Name(),
+					test.want1, test.hasError, test.wantSessionRemove,
+					got1, got2, test.sessionStore.removeHistory)
 			}
 		})
 	}

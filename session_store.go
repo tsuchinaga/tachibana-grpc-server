@@ -5,25 +5,33 @@ import (
 )
 
 type iSessionStore interface {
-	getSession(key string) *loginSession
-	save(key string, session *loginSession)
+	getSession(key string) *accountSession
+	save(key string, session *accountSession)
+	remove(key string)
 }
 
 type sessionStore struct {
-	store map[string]*loginSession
+	store map[string]*accountSession
 	mtx   sync.RWMutex
 }
 
-func (s *sessionStore) getSession(key string) *loginSession {
+func (s *sessionStore) getSession(key string) *accountSession {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
 	return s.store[key]
 }
 
-func (s *sessionStore) save(key string, session *loginSession) {
+func (s *sessionStore) save(key string, session *accountSession) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
 	s.store[key] = session
+}
+
+func (s *sessionStore) remove(key string) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	delete(s.store, key)
 }

@@ -7,8 +7,9 @@ import (
 	pb "gitlab.com/tsuchinaga/tachibana-grpc-server/tachibanapb"
 )
 
-type loginSession struct {
+type accountSession struct {
 	date     time.Time
+	token    string
 	session  *tachibana.Session
 	response *pb.LoginResponse
 }

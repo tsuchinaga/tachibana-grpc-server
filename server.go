@@ -2,7 +2,6 @@ package tachibana_grpc_server
 
 import (
 	"context"
-
 	"google.golang.org/grpc/metadata"
 
 	tachibana "gitlab.com/tsuchinaga/go-tachibanaapi"
@@ -16,7 +15,7 @@ func NewServer() pb.TachibanaServiceServer {
 		},
 		clock: &clock{},
 		sessionStore: &sessionStore{
-			store: map[string]*loginSession{},
+			store: map[string]*accountSession{},
 		},
 	}
 }
@@ -45,12 +44,28 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 
 	// セッションの取得に成功したら
 	if session.session != nil {
+		session.token = sessionKey
 		session.response.Token = sessionKey
 		s.sessionStore.save(sessionKey, session)
 	}
 
 	// ログイン結果を返す
 	return session.response, nil
+}
+
+func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
+	session, ok := s.getSession(ctx)
+	if !ok {
+		return nil, s.withErrorDetail(notLoggedInErr)
+	}
+
+	res, err := s.tachibana.logout(ctx, session, req)
+	if err != nil {
+		return nil, s.withErrorDetail(err)
+	}
+
+	s.sessionStore.remove(session.token)
+	return res, nil
 }
 
 func (s *server) withErrorDetail(err error) error {
@@ -60,7 +75,7 @@ func (s *server) withErrorDetail(err error) error {
 	}
 }
 
-func (s *server) getSession(ctx context.Context) (*loginSession, bool) {
+func (s *server) getSession(ctx context.Context) (*accountSession, bool) {
 	const SessionHeaderKey = "session-token" // リクエストヘッダに付けられる認証トークン名
 
 	md, ok := metadata.FromIncomingContext(ctx)
