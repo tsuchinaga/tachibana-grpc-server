@@ -8,7 +8,6 @@ import "google/protobuf/timestamp.proto";
 
 service TachibanaService {
   rpc Login(LoginRequest) returns (LoginResponse); // ログイン
-  rpc Logout(LogoutRequest) returns (LogoutResponse); // ログアウト
 }
 
 message CommonResponse {
@@ -23,6 +22,7 @@ message CommonResponse {
 message LoginRequest {
   string user_id = 1; // ユーザID
   string password = 2; // パスワード
+  string client_name = 3; // クライアント名
 }
 
 message LoginResponse {
@@ -50,14 +50,6 @@ message LoginResponse {
   bool nisa_account = 22; // 非課税口座開設区分
   bool unread_document = 23; // 金商法交付書面未読フラグ
   string token = 24; // トークン
-}
-
-message LogoutRequest {}
-
-message LogoutResponse {
-  CommonResponse common_response = 1; // レスポンス共通項目
-  string result_code = 2; // 結果コード
-  string result_text = 3; // 結果テキスト
 }
 
 enum ErrorNo {

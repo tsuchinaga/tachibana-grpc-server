@@ -15,7 +15,8 @@ func NewServer() pb.TachibanaServiceServer {
 		},
 		clock: &clock{},
 		sessionStore: &sessionStore{
-			store: map[string]*accountSession{},
+			sessions:     map[string]*accountSession{},
+			clientTokens: map[string]string{},
 		},
 	}
 }
@@ -30,42 +31,36 @@ type server struct {
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	// ログイン済みならすでに取得したレスポンスを返す
 	today := s.clock.today()
-	sessionKey := req.GetKey(today)
-	session := s.sessionStore.getSession(sessionKey)
+	clientToken := req.ClientToken(today)
+	session := s.sessionStore.getByClientToken(clientToken)
 	if session != nil {
-		return session.response, nil
+		return session.getLoginResponse(clientToken), nil
 	}
 
-	// 未ログインならログイン処理を実行
-	session, err := s.tachibana.login(ctx, req, today)
+	// sessionだけあればclientとつないで返す
+	sessionToken := req.SessionToken(today)
+	session = s.sessionStore.getBySessionToken(sessionToken)
+	if session != nil {
+		s.sessionStore.addClientToken(sessionToken, clientToken)
+		return session.getLoginResponse(clientToken), nil
+	}
+
+	// ログインセッションがなければログイン処理を実行
+	session, err := s.tachibana.login(ctx, req)
 	if err != nil {
 		return nil, s.withErrorDetail(err)
 	}
 
-	// セッションの取得に成功したら
-	if session.session != nil {
-		session.token = sessionKey
-		session.response.Token = sessionKey
-		s.sessionStore.save(sessionKey, session)
+	// セッションの取得に成功しなければ
+	if session.Session == nil {
+		return session.getLoginResponse(""), nil
 	}
 
+	session.Date = today
+	session.Token = sessionToken
+	s.sessionStore.save(sessionToken, clientToken, session)
 	// ログイン結果を返す
-	return session.response, nil
-}
-
-func (s *server) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
-	session, ok := s.getSession(ctx)
-	if !ok {
-		return nil, s.withErrorDetail(notLoggedInErr)
-	}
-
-	res, err := s.tachibana.logout(ctx, session, req)
-	if err != nil {
-		return nil, s.withErrorDetail(err)
-	}
-
-	s.sessionStore.remove(session.token)
-	return res, nil
+	return session.getLoginResponse(clientToken), nil
 }
 
 func (s *server) withErrorDetail(err error) error {
@@ -75,22 +70,18 @@ func (s *server) withErrorDetail(err error) error {
 	}
 }
 
-func (s *server) getSession(ctx context.Context) (*accountSession, bool) {
+func (s *server) getClientToken(ctx context.Context) (string, bool) {
 	const SessionHeaderKey = "session-token" // リクエストヘッダに付けられる認証トークン名
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, false
+		return "", false
 	}
 
 	tokens := md[SessionHeaderKey]
 	if len(tokens) == 0 {
-		return nil, false
+		return "", false
 	}
 
-	session := s.sessionStore.getSession(tokens[0])
-	if session == nil {
-		return nil, false
-	}
-	return session, true
+	return tokens[0], true
 }

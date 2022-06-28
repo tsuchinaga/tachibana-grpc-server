@@ -4,8 +4,6 @@ import (
 	"context"
 	"log"
 
-	"google.golang.org/grpc/metadata"
-
 	"gitlab.com/tsuchinaga/tachibana-grpc-server/examples"
 
 	"gitlab.com/tsuchinaga/tachibana-grpc-server/tachibanapb"
@@ -22,24 +20,14 @@ func main() {
 	}
 
 	cli := tachibanapb.NewTachibanaServiceClient(conn)
-	var header metadata.MD
 
 	// ログイン
 	{
 		res, err := cli.Login(context.Background(), &tachibanapb.LoginRequest{
-			UserId:   examples.UserId,
-			Password: examples.Password,
+			UserId:     examples.UserId,
+			Password:   examples.Password,
+			ClientName: examples.ClientName,
 		})
-		log.Printf("%+v, %+v\n", res, err)
-
-		if err == nil {
-			header = metadata.Pairs("session-token", res.Token)
-		}
-	}
-
-	// ログアウト
-	{
-		res, err := cli.Logout(metadata.NewOutgoingContext(context.Background(), header), &tachibanapb.LogoutRequest{})
 		log.Printf("%+v, %+v\n", res, err)
 	}
 }

@@ -42,18 +42,6 @@ func (t *tachibanaApi) fromLoginResponse(res *tachibana.LoginResponse) *pb.Login
 	}
 }
 
-func (t *tachibanaApi) toLogoutRequest(_ *pb.LogoutRequest) *tachibana.LogoutRequest {
-	return &tachibana.LogoutRequest{}
-}
-
-func (t *tachibanaApi) fromLogoutResponse(res *tachibana.LogoutResponse) *pb.LogoutResponse {
-	return &pb.LogoutResponse{
-		CommonResponse: t.fromCommonResponse(&res.CommonResponse),
-		ResultCode:     res.ResultCode,
-		ResultText:     res.ResultText,
-	}
-}
-
 func (t *tachibanaApi) fromCommonResponse(res *tachibana.CommonResponse) *pb.CommonResponse {
 	return &pb.CommonResponse{
 		No:           res.No,

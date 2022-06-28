@@ -1,37 +1,63 @@
 package tachibana_grpc_server
 
 import (
+	"log"
 	"sync"
 )
 
 type iSessionStore interface {
-	getSession(key string) *accountSession
-	save(key string, session *accountSession)
-	remove(key string)
+	getBySessionToken(token string) *accountSession
+	getByClientToken(token string) *accountSession
+	save(sessionToken string, clientToken string, session *accountSession)
+	addClientToken(sessionToken string, clientToken string)
+	removeClient(token string)
 }
 
 type sessionStore struct {
-	store map[string]*accountSession
-	mtx   sync.RWMutex
+	sessions     map[string]*accountSession
+	clientTokens map[string]string
+	mtx          sync.RWMutex
 }
 
-func (s *sessionStore) getSession(key string) *accountSession {
+func (s *sessionStore) getBySessionToken(token string) *accountSession {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
-	return s.store[key]
+	return s.sessions[token]
 }
 
-func (s *sessionStore) save(key string, session *accountSession) {
+func (s *sessionStore) getByClientToken(token string) *accountSession {
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
+
+	sessionToken, ok := s.clientTokens[token]
+	if !ok {
+		return nil
+	}
+
+	return s.sessions[sessionToken]
+}
+
+func (s *sessionStore) save(sessionToken string, clientToken string, session *accountSession) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	s.store[key] = session
+	s.sessions[sessionToken] = session
+	s.clientTokens[clientToken] = sessionToken
+	log.Printf("save: %+v, %+v\n", s.sessions, s.clientTokens)
 }
 
-func (s *sessionStore) remove(key string) {
+func (s *sessionStore) addClientToken(sessionToken string, clientToken string) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	delete(s.store, key)
+	s.clientTokens[clientToken] = sessionToken
+	log.Printf("addClientToken: %+v, %+v\n", s.sessions, s.clientTokens)
+}
+
+func (s *sessionStore) removeClient(token string) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	delete(s.clientTokens, token)
 }
