@@ -20,7 +20,7 @@ pages:
     - apt update -y
     - apt install -y protobuf-compiler
     - protoc --version
-    - go get -u github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
+    - go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
     - protoc --doc_out=./public --doc_opt=html,index.html tachibanapb/*.proto
   artifacts:
     paths:
