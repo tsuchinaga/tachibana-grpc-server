@@ -19,7 +19,7 @@
 
 ## 定義
 
-[protobufファイル](./tachibanaspb/tachibana.proto)
+[protobufファイル](./tachibanapb/tachibana.proto)
 
 [protobufドキュメント](https://tsuchinaga.gitlab.io/tachibana-grpc-server/#tachibanapb.TachibanaService)
 
