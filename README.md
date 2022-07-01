@@ -25,6 +25,6 @@
 
 ## 注意
 
-まだ開発中で全機能実装できていません。
+まだ開発中で全機能の実装はできていません。
 
-[github.com/tsuchinaga/tachibana-grpc-server](https://github.com/tsuchinaga/tachibana-grpc-server) にミラーリングしていますが、オリジナルは [gitlab.com/tsuchinaga/tachibana-grpc-server](https://gitlab.com/tsuchinaga/tachibana-grpc-server) にあります。
+[//]: # ([github.com/tsuchinaga/tachibana-grpc-server]&#40;https://github.com/tsuchinaga/tachibana-grpc-server&#41; にミラーリングしていますが、オリジナルは [gitlab.com/tsuchinaga/tachibana-grpc-server]&#40;https://gitlab.com/tsuchinaga/tachibana-grpc-server&#41; にあります。)
