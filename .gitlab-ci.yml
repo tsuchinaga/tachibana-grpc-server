@@ -1,0 +1,29 @@
+image: golang:1.18
+
+variables:
+  TZ: Asia/Tokyo
+
+stages:
+  - test
+  - deploy
+
+test-project:
+  stage: test
+  script:
+    - go test ./... -cover -coverprofile=cover.out -covermode=atomic -v
+    - go tool cover -func=cover.out
+  coverage: '/^total:\s+\(statements\)\s+(\d+\.\d?%)\s*$/'
+
+pages:
+  stage: deploy
+  script:
+    - apt update -y
+    - apt install -y protobuf-compiler
+    - protoc --version
+    - go get -u github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
+    - protoc --doc_out=./public --doc_opt=html,index.html tachibanapb/*.proto
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
