@@ -1,7 +1,6 @@
 package tachibana_grpc_server
 
 import (
-	"log"
 	"sync"
 )
 
@@ -44,7 +43,6 @@ func (s *sessionStore) save(sessionToken string, clientToken string, session *ac
 
 	s.sessions[sessionToken] = session
 	s.clientTokens[clientToken] = sessionToken
-	log.Printf("save: %+v, %+v\n", s.sessions, s.clientTokens)
 }
 
 func (s *sessionStore) addClientToken(sessionToken string, clientToken string) {
@@ -52,7 +50,6 @@ func (s *sessionStore) addClientToken(sessionToken string, clientToken string) {
 	defer s.mtx.Unlock()
 
 	s.clientTokens[clientToken] = sessionToken
-	log.Printf("addClientToken: %+v, %+v\n", s.sessions, s.clientTokens)
 }
 
 func (s *sessionStore) removeClient(token string) {
