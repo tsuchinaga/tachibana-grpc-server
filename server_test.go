@@ -115,29 +115,25 @@ func Test_server_getClientToken(t *testing.T) {
 	tests := []struct {
 		name         string
 		sessionStore *testSessionStore
-		arg1Func     func() context.Context
+		arg1         context.Context
 		want1        string
 		want2        bool
 	}{
 		{name: "metadataのないcontextを渡したらfalse",
 			sessionStore: &testSessionStore{},
-			arg1Func:     func() context.Context { return context.Background() },
+			arg1:         context.Background(),
 			want1:        "",
 			want2:        false},
 		{name: "Session-tokenがメタデータになければfalse",
 			sessionStore: &testSessionStore{},
-			arg1Func: func() context.Context {
-				return metadata.NewIncomingContext(context.Background(), metadata.Pairs("foo", "token001"))
-			},
-			want1: "",
-			want2: false},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("foo", "token001")),
+			want1:        "",
+			want2:        false},
 		{name: "session-tokenがあれば文字列を返す",
 			sessionStore: &testSessionStore{getBySessionToken1: &accountSession{BaseResponse: &pb.LoginResponse{Token: "token001"}}},
-			arg1Func: func() context.Context {
-				return metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))
-			},
-			want1: "token001",
-			want2: true},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			want1:        "token001",
+			want2:        true},
 	}
 
 	for _, test := range tests {
@@ -145,9 +141,429 @@ func Test_server_getClientToken(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			server := &server{sessionStore: test.sessionStore}
-			got1, got2 := server.getClientToken(test.arg1Func())
+			got1, got2 := server.getClientToken(test.arg1)
 			if !reflect.DeepEqual(test.want1, got1) || !reflect.DeepEqual(test.want2, got2) {
 				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.want2, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_getSession(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		arg1         context.Context
+		want1        *accountSession
+		hasError     bool
+	}{
+		{name: "metadataのないcontextを渡したらエラー",
+			sessionStore: &testSessionStore{},
+			arg1:         context.Background(),
+			want1:        nil,
+			hasError:     true},
+		{name: "session-tokenがメタデータになければエラー",
+			sessionStore: &testSessionStore{},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("foo", "token001")),
+			want1:        nil,
+			hasError:     true},
+		{name: "session-tokenがあっても、storeにデータがなければエラー",
+			sessionStore: &testSessionStore{getByClientToken1: nil},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			want1:        nil,
+			hasError:     true},
+		{name: "session-tokenがあっても、storeにデータがあればそれを返す",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{BaseResponse: &pb.LoginResponse{Token: "token001"}}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			want1:        &accountSession{BaseResponse: &pb.LoginResponse{Token: "token001"}},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore}
+			got1, got2 := server.getSession(test.arg1)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_NewOrder(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.NewOrderRequest
+		want1        *pb.NewOrderResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.NewOrderRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{newOrder2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.NewOrderRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{newOrder1: &pb.NewOrderResponse{OrderNumber: "order-number001"}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.NewOrderRequest{},
+			want1:        &pb.NewOrderResponse{OrderNumber: "order-number001"},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.NewOrder(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_CancelOrder(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.CancelOrderRequest
+		want1        *pb.CancelOrderResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.CancelOrderRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{cancelOrder2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.CancelOrderRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{cancelOrder1: &pb.CancelOrderResponse{OrderNumber: "order-number001"}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.CancelOrderRequest{},
+			want1:        &pb.CancelOrderResponse{OrderNumber: "order-number001"},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.CancelOrder(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_OrderList(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.OrderListRequest
+		want1        *pb.OrderListResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.OrderListRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{orderList2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.OrderListRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{orderList1: &pb.OrderListResponse{ResultCode: "0"}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.OrderListRequest{},
+			want1:        &pb.OrderListResponse{ResultCode: "0"},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.OrderList(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_StockMaster(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.StockMasterRequest
+		want1        *pb.StockMasterResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.StockMasterRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{stockMaster2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.StockMasterRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{stockMaster1: &pb.StockMasterResponse{}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.StockMasterRequest{},
+			want1:        &pb.StockMasterResponse{},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.StockMaster(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_StockExchangeMaster(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.StockExchangeMasterRequest
+		want1        *pb.StockExchangeMasterResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.StockExchangeMasterRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{stockExchangeMaster2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.StockExchangeMasterRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{stockExchangeMaster1: &pb.StockExchangeMasterResponse{}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.StockExchangeMasterRequest{},
+			want1:        &pb.StockExchangeMasterResponse{},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.StockExchangeMaster(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_MarketPrice(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.MarketPriceRequest
+		want1        *pb.MarketPriceResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.MarketPriceRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{marketPrice2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.MarketPriceRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{marketPrice1: &pb.MarketPriceResponse{}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.MarketPriceRequest{},
+			want1:        &pb.MarketPriceResponse{},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.MarketPrice(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_BusinessDay(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.BusinessDayRequest
+		want1        *pb.BusinessDayResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.BusinessDayRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{businessDay2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.BusinessDayRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{businessDay1: &pb.BusinessDayResponse{}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.BusinessDayRequest{},
+			want1:        &pb.BusinessDayResponse{},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.BusinessDay(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_TickGroup(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.TickGroupRequest
+		want1        *pb.TickGroupResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.TickGroupRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{tickGroup2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.TickGroupRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{tickGroup1: &pb.TickGroupResponse{}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.TickGroupRequest{},
+			want1:        &pb.TickGroupResponse{},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.TickGroup(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
 			}
 		})
 	}

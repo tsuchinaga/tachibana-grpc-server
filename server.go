@@ -63,6 +63,78 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	return session.getLoginResponse(clientToken), nil
 }
 
+func (s *server) NewOrder(ctx context.Context, req *pb.NewOrderRequest) (*pb.NewOrderResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.newOrder(ctx, session.Session, req)
+}
+
+func (s *server) CancelOrder(ctx context.Context, req *pb.CancelOrderRequest) (*pb.CancelOrderResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.cancelOrder(ctx, session.Session, req)
+}
+
+func (s *server) OrderList(ctx context.Context, req *pb.OrderListRequest) (*pb.OrderListResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.orderList(ctx, session.Session, req)
+}
+
+func (s *server) OrderDetail(ctx context.Context, req *pb.OrderDetailRequest) (*pb.OrderDetailResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.orderDetail(ctx, session.Session, req)
+}
+
+func (s *server) StockMaster(ctx context.Context, req *pb.StockMasterRequest) (*pb.StockMasterResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.stockMaster(ctx, session.Session, req)
+}
+
+func (s *server) StockExchangeMaster(ctx context.Context, req *pb.StockExchangeMasterRequest) (*pb.StockExchangeMasterResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.stockExchangeMaster(ctx, session.Session, req)
+}
+
+func (s *server) MarketPrice(ctx context.Context, req *pb.MarketPriceRequest) (*pb.MarketPriceResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.marketPrice(ctx, session.Session, req)
+}
+
+func (s *server) BusinessDay(ctx context.Context, req *pb.BusinessDayRequest) (*pb.BusinessDayResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.businessDay(ctx, session.Session, req)
+}
+
+func (s *server) TickGroup(ctx context.Context, req *pb.TickGroupRequest) (*pb.TickGroupResponse, error) {
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.tachibana.tickGroup(ctx, session.Session, req)
+}
+
 func (s *server) withErrorDetail(err error) error {
 	switch e := err.(type) {
 	default:
@@ -84,4 +156,17 @@ func (s *server) getClientToken(ctx context.Context) (string, bool) {
 	}
 
 	return tokens[0], true
+}
+
+func (s *server) getSession(ctx context.Context) (*accountSession, error) {
+	clientToken, ok := s.getClientToken(ctx)
+	if !ok {
+		return nil, notLoggedInErr
+	}
+
+	session := s.sessionStore.getByClientToken(clientToken)
+	if session == nil {
+		return nil, notLoggedInErr
+	}
+	return session, nil
 }

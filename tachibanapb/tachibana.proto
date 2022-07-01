@@ -8,6 +8,15 @@ import "google/protobuf/timestamp.proto";
 
 service TachibanaService {
   rpc Login(LoginRequest) returns (LoginResponse); // ログイン
+  rpc NewOrder(NewOrderRequest) returns (NewOrderResponse); // 新規注文
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse); // 取消注文
+  rpc OrderList(OrderListRequest) returns (OrderListResponse); // 注文一覧
+  rpc OrderDetail(OrderDetailRequest) returns (OrderDetailResponse); // 注文一覧(詳細)
+  rpc StockMaster(StockMasterRequest) returns (StockMasterResponse); // 株式銘柄マスタ
+  rpc StockExchangeMaster(StockExchangeMasterRequest) returns (StockExchangeMasterResponse); // 株式銘柄市場マスタ
+  rpc MarketPrice(MarketPriceRequest) returns (MarketPriceResponse); // 時価関連情報
+  rpc BusinessDay(BusinessDayRequest) returns (BusinessDayResponse); // 日付情報
+  rpc TickGroup(TickGroupRequest) returns (TickGroupResponse); // 呼値
 }
 
 message CommonResponse {
@@ -50,6 +59,419 @@ message LoginResponse {
   bool nisa_account = 22; // 非課税口座開設区分
   bool unread_document = 23; // 金商法交付書面未読フラグ
   string token = 24; // トークン
+}
+
+message NewOrderRequest {
+  AccountType account_type = 1; // 譲渡益課税区分
+  DeliveryAccountType delivery_account_type = 2; // 建玉譲渡益課税区分
+  string issue_code = 3; // 銘柄コード
+  Exchange exchange = 4; // 市場
+  Side side = 5; // 売買区分
+  ExecutionTiming execution_timing = 6; // 執行条件
+  double order_price = 7; // 注文値段
+  double order_quantity = 8; // 注文数量
+  TradeType trade_type = 9; // 現金信用区分
+  google.protobuf.Timestamp expire_date = 10; // 注文期日
+  bool expire_date_is_today = 11; // 注文期日を当日
+  StopOrderType stop_order_type = 12; // 逆指値注文種別
+  double trigger_price = 13; // 逆指値条件
+  double stop_order_price = 14; // 逆指値値段
+  ExitPositionType exit_position_type = 15; // 建日種類(返済ポジション指定方法)
+  string second_password = 16; // 第二パスワード
+  repeated ExitPosition exit_positions = 17; // 返済リスト
+}
+
+message ExitPosition {
+  string position_number = 1; // 新規建玉番号
+  int32 sequence_number = 2; // 建日順位
+  double order_quantity = 3; // 注文数量
+}
+
+message NewOrderResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  string result_code = 2; // 結果コード
+  string result_text = 3; // 結果テキスト
+  string warning_code = 4; // 警告コード
+  string warning_text = 5; // 警告テキスト
+  string order_number = 6; // 注文番号
+  google.protobuf.Timestamp execution_date = 7; // 営業日
+  double delivery_amount = 8; // 注文受渡金額
+  double commission = 9; // 注文手数料
+  double commission_tax = 10; // 注文消費税
+  double interest = 11; // 金利
+  google.protobuf.Timestamp order_datetime = 12; // 注文日時
+}
+
+message CancelOrderRequest {
+  string order_number = 1; // 注文番号
+  google.protobuf.Timestamp execution_date = 2; // 営業日
+  string second_password = 3; // 第二パスワード
+}
+
+message CancelOrderResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  string result_code = 2; // 結果コード
+  string result_text = 3; // 結果テキスト
+  string order_number = 4; // 注文番号
+  google.protobuf.Timestamp execution_date = 5; // 営業日
+  double delivery_amount = 6; // 注文受渡金額
+  google.protobuf.Timestamp order_datetime = 7; // 注文日時
+}
+
+message OrderListRequest {
+  string issue_code = 1; // 銘柄コード
+  google.protobuf.Timestamp execution_date = 2; // 注文執行予定日
+  OrderInquiryStatus order_inquiry_status = 3; // 注文照会状態
+}
+
+message OrderListResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  string issue_code = 2; // 銘柄コード
+  google.protobuf.Timestamp execution_date = 3; // 注文執行予定日
+  OrderInquiryStatus order_inquiry_status = 4; // 注文照会状態
+  string result_code = 5; // 結果コード
+  string result_text = 6; // 結果テキスト
+  string warning_code = 7; // 警告コード
+  string warning_text = 8; // 警告テキスト
+  repeated Order orders = 9; // 注文リスト
+}
+
+message Order {
+  string warning_code = 1; // 警告コード
+  string warning_text = 2; // 警告テキスト
+  string order_number = 3; // 注文番号
+  string issue_code = 4; // 銘柄コード
+  Exchange exchange = 5; // 市場
+  AccountType account_type = 6; // 譲渡益課税区分
+  TradeType trade_type = 7; // 現金信用区分
+  ExitTermType exit_term_type = 8; // 弁済区分
+  Side side = 9; // 売買区分
+  double order_quantity = 10; // 注文株数
+  double current_quantity = 11; // 有効株数
+  double price = 12; // 注文単価
+  ExecutionTiming execution_timing = 13; // 執行条件
+  ExecutionType execution_type = 14; // 注文値段区分
+  StopOrderType stop_order_type = 15; // 逆指値注文種別
+  double StopTriggerPrice = 16; // 逆指値条件
+  ExecutionType stop_order_execution_type = 17; // 逆指値値段区分
+  double stop_order_price = 18; // 逆指値値段
+  TriggerType trigger_type = 19; // トリガータイプ
+  ExitPositionType exit_position_type = 20; // 建日種類(返済ポジション指定方法)
+  double contract_quantity = 21; // 成立株数
+  double contract_price = 22; // 成立単価
+  PartContractType part_contract_type = 23; // 内出来区分
+  google.protobuf.Timestamp execution_date = 24; // 執行日
+  OrderStatus order_status = 25; // 状態コード
+  string order_status_text = 26; // 状態
+  ContractStatus contract_status = 27; // 約定ステータス
+  google.protobuf.Timestamp order_datetime = 28; // 注文日付
+  google.protobuf.Timestamp expire_date = 29; // 有効期限
+  CarryOverType carry_over_type = 30; // 繰越注文フラグ
+  CorrectCancelType correct_cancel_type = 31; // 訂正取消可否フラグ
+  double estimation_amount = 32; // 概算代金
+}
+
+message OrderDetailRequest {
+  string order_number = 1; // 注文番号
+  google.protobuf.Timestamp execution_date = 2; // 営業日
+}
+
+message OrderDetailResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  string order_number = 2; // 注文番号
+  google.protobuf.Timestamp execution_date = 3; // 営業日
+  string result_code = 4; // 結果コード
+  string result_text = 5; // 結果テキスト
+  string warning_code = 6; // 警告コード
+  string warning_text = 7; // 警告テキスト
+  string issue_code = 8; // 銘柄CODE
+  Exchange exchange = 9; // 市場
+  Side side = 10; // 売買区分
+  TradeType trade_type = 11; // 現金信用区分
+  ExitTermType exit_term_type = 12; // 弁済区分
+  ExecutionTiming execution_timing = 13; // 執行条件
+  ExecutionType execution_type = 14; // 注文値段区分
+  double price = 15; // 注文単価
+  double order_quantity = 16; // 注文株数
+  double current_quantity = 17; // 有効株数
+  OrderStatus order_status = 18; // 状態コード
+  string order_status_text = 19; // 状態
+  google.protobuf.Timestamp order_datetime = 20; // 注文日付
+  google.protobuf.Timestamp expire_date = 21; // 有効期限
+  Channel channel = 22; // チャネル
+  AccountType stock_account_type = 23; // 現物口座区分
+  AccountType margin_account_type = 24; // 建玉口座区分
+  StopOrderType stop_order_type = 25; // 逆指値注文種別
+  double stop_trigger_price = 26; // 逆指値条件
+  ExecutionType stop_order_execution_type = 27; // 逆指値値段区分
+  double stop_order_price = 28; // 逆指値値段
+  TriggerType trigger_type = 29; // トリガータイプ
+  google.protobuf.Timestamp trigger_datetime = 30; // トリガー日時
+  google.protobuf.Timestamp delivery_date = 31; // 受渡日
+  double contract_price = 32; // 約定単価
+  double contract_quantity = 33; // 約定株数
+  double trading_amount = 34; // 売買代金
+  PartContractType part_contract_type = 35; // 内出来区分
+  double estimation_amount = 36; // 概算代金
+  double commission = 37; // 手数料
+  double commission_tax = 38; // 消費税
+  ExitPositionType exit_position_type = 39; // 建日種類(返済ポジション指定方法)
+  string exchange_error_code = 40; // 市場/取次ErrorCode
+  google.protobuf.Timestamp exchange_order_datetime = 41; // 市場注文受付時刻
+  repeated Contract contracts = 42; // 約定失効リスト
+  repeated HoldPosition hold_positions = 43; // 決済注文建株指定リスト
+}
+
+message Contract {
+  string warning_code = 1; // 警告コード
+  string warning_text = 2; // 警告テキスト
+  double quantity = 3; // 約定数量
+  double price = 4; // 約定価格
+  google.protobuf.Timestamp datetime = 5; // 約定日時
+}
+
+message HoldPosition {
+  string warning_code = 1; // 警告コード
+  string warning_text = 2; // 警告テキスト
+  int32 sort_order = 3; // 順位
+  google.protobuf.Timestamp contract_date = 4; // 建日
+  double entry_price = 5; // 建単価
+  double hold_quantity = 6; // 返済注文株数
+  double exit_quantity = 7; // 約定株数
+  double exit_price = 8; // 約定単価
+  double commission = 9; // 建手数料
+  double interest = 10; // 順日歩
+  double premiums = 11; // 逆日歩
+  double rewriting_fee = 12; // 書換料
+  double management_fee = 13; // 管理費
+  double lending_fee = 14; // 貸株料
+  double other_fee = 15; // その他
+  double profit = 16; // 決済損益/受渡代金
+}
+
+message StockMasterRequest {
+  repeated StockMasterColumn columns = 1; // 取得したい情報
+}
+
+message StockMasterResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  repeated StockMaster stock_masters = 2; // 株式銘柄マスタ
+}
+
+message StockMaster {
+  string issue_code = 1; // 銘柄コード
+  string name = 2; // 銘柄名
+  string short_name = 3; // 銘柄名略称
+  string kana = 4; // 銘柄名(カナ)
+  string alphabet = 5; // 銘柄名(英語表記)
+  bool specific_target = 6; // 特定口座対象C
+  TaxFree tax_free = 7; // 非課税対象C
+  int64 shared_stocks = 8; // 上場発行株数
+  ExRightType ex_right_type = 9; // 権利落ちフラグ
+  google.protobuf.Timestamp last_right_day = 10; // 権利付最終日
+  ListingType listing_type = 11; // 上場・入札C
+  google.protobuf.Timestamp release_trading_date = 12; // 入札解除日
+  google.protobuf.Timestamp trading_date = 13; // 入札日
+  double trading_unit = 14; // 売買単位
+  double next_trading_unit = 15; // 売買単位(翌営業日)
+  StopTradingType stop_trading_type = 16; // 売買停止C
+  google.protobuf.Timestamp start_publication_date = 17; // 発行開始日
+  google.protobuf.Timestamp last_publication_date = 18; // 発行最終日
+  SettlementType settlement_type = 19; // 決算C
+  google.protobuf.Timestamp settlement_date = 20; // 決算日
+  google.protobuf.Timestamp listing_date = 21; // 上場応答日
+  string expire_date_2_type = 22; // 二類期日C
+  double large_unit = 23; // 大口株数
+  double large_amount = 24; // 大口金額
+  string output_ticket_type = 25; // 場伝票出力有無C
+  double deposit_amount = 26; // 保証金代用掛目
+  double deposit_valuation = 27; // 代用証券評価単価
+  string organization_type = 28; // 機構参加C
+  string provisional_type = 29; // 仮決済C
+  Exchange primary_exchange = 30; // 優先市場
+  string indefinite_period_type = 31; // 無期限対象C
+  string industry_code = 32; // 業種コード
+  string industry_name = 33; // 業種コード名
+  string sor_target_type = 34; // SOR対象銘柄C
+  google.protobuf.Timestamp create_datetime = 35; // 作成日時
+  google.protobuf.Timestamp update_datetime = 36; // 更新日時
+  string update_number = 37; // 更新通番
+}
+
+message StockExchangeMasterRequest {
+  repeated StockExchangeMasterColumn columns = 1; // 取得したい情報
+}
+
+message StockExchangeMasterResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  repeated StockExchangeMaster stock_exchange_masters = 2; // 株式銘柄市場マスタ
+}
+
+message StockExchangeMaster {
+  string issue_code = 1; // 銘柄コード
+  Exchange exchange = 2; // 上場市場
+  string stock_system_type = 3; // システムC
+  double under_limit_price = 4; // 値幅下限
+  double upper_limit_price = 5; // 値幅上限
+  string symbol_category = 6; // 銘柄区分C
+  Exchange limit_price_exchange = 7; // 値幅市場C
+  MarginType margin_type = 8; // 信用C
+  google.protobuf.Timestamp listing_date = 9; // 新規上場日
+  google.protobuf.Timestamp limit_price_date = 10; // 値幅期限日
+  string limit_price_category = 11; // 値幅規制C
+  double limit_price_value = 12; // 値幅規制値
+  bool confirm_limit_price = 13; // 値幅チェック可否C
+  string section = 14; // 銘柄部別C
+  double prev_close_price = 15; // 前日終値
+  Exchange calculate_limit_price_exchange = 16; // 値幅算出市場C
+  string regulation1 = 17; // 銘柄規制1C
+  string regulation2 = 18; // 銘柄規制2C
+  string section_type = 19; // 上場区分
+  google.protobuf.Timestamp delisting_date = 20; // 上場廃止日
+  double trading_unit = 21; // 売買単位
+  double next_trading_unit = 22; // 売買単位(翌営業日)
+  TickGroupType tick_group_type = 23; // 呼値の単位番号
+  TickGroupType next_tick_group_type = 24; // 呼値の単位番号(翌営業日)
+  string information_source = 25; // 情報系ソース
+  string information_code = 26; // 情報系コード
+  double offer_price = 27; // 公募価格
+  google.protobuf.Timestamp create_datetime = 28; // 作成日時
+  google.protobuf.Timestamp update_datetime = 29; // 更新日時
+  string update_number = 30; // 更新通番
+}
+
+message MarketPriceRequest {
+  repeated string issue_codes = 1; // 取得したい銘柄コード
+  repeated MarketPriceColumn columns = 2; // 取得したい情報
+}
+
+message MarketPriceResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  repeated MarketPrice market_prices = 2; // 時価情報
+}
+
+message MarketPrice {
+  string issue_code = 1; // 銘柄コード
+  string section = 2; // 所属
+  double current_price = 3; // 現在値
+  google.protobuf.Timestamp current_price_time = 4; // 現在値時刻
+  ChangePriceType change_price_type = 5; // 現値前値比較
+  double prev_day_ratio = 6; // 前日比
+  double prev_day_percent = 7; // 騰落率
+  double open_price = 8; // 始値
+  google.protobuf.Timestamp open_price_time = 9; // 始値時刻
+  double high_price = 10; // 高値
+  google.protobuf.Timestamp high_price_time = 11; // 高値時刻
+  double low_price = 12; // 安値
+  google.protobuf.Timestamp low_price_time = 13; // 安値時刻
+  double volume = 14; // 出来高
+  IndicationPriceType ask_sign = 15; // 売気配値種類
+  double ask_price = 16; // 売気配値
+  double ask_quantity = 17; // 売気配数量
+  IndicationPriceType bid_sign = 18; // 買気配値種類
+  double bid_price = 19; // 買気配値
+  double bid_quantity = 20;// 買気配数量
+  string ex_right_type = 21;// 配当落銘柄区分
+  string discontinuity_type = 22; // 不連続要因銘柄区分
+  CurrentPriceType stop_high = 23; // 日通し高値フラグ
+  CurrentPriceType stop_low = 24; // 日通し安値フラグ
+  double trading_amount = 25; // 売買代金
+  double ask_quantity_market = 26; // 売数量(成行)
+  double bid_quantity_market = 27;// 買数量(成行)
+  double ask_quantity_over = 28;// 売-OVER
+  double ask_quantity10 = 29;// 売-10-数量
+  double ask_price10 = 30;// 売-10-値段
+  double ask_quantity9 = 31;// 売-9-数量
+  double ask_price9 = 32;// 売-9-値段
+  double ask_quantity8 = 33;// 売-8-数量
+  double ask_price8 = 34;// 売-8-値段
+  double ask_quantity7 = 35;// 売-7-数量
+  double ask_price7 = 36;// 売-7-値段
+  double ask_quantity6 = 37;// 売-6-数量
+  double ask_price6 = 38;// 売-6-値段
+  double ask_quantity5 = 39;// 売-5-数量
+  double ask_price5 = 40;// 売-5-値段
+  double ask_quantity4 = 41;// 売-4-数量
+  double ask_price4 = 42;// 売-4-値段
+  double ask_quantity3 = 43;// 売-3-数量
+  double ask_price3 = 44;// 売-3-値段
+  double ask_quantity2 = 45;// 売-2-数量
+  double ask_price2 = 46;// 売-2-値段
+  double ask_quantity1 = 47;// 売-1-数量
+  double ask_price1 = 48;// 売-1-値段
+  double bid_quantity1 = 49; // 買-1-数量
+  double bid_price1 = 50; // 買-1-値段
+  double bid_quantity2 = 51; // 買-2-数量
+  double bid_price2 = 52; // 買-2-値段
+  double bid_quantity3 = 53; // 買-3-数量
+  double bid_price3 = 54; // 買-3-値段
+  double bid_quantity4 = 55; // 買-4-数量
+  double bid_price4 = 56; // 買-4-値段
+  double bid_quantity5 = 57; // 買-5-数量
+  double bid_price5 = 58; // 買-5-値段
+  double bid_quantity6 = 59; // 買-6-数量
+  double bid_price6 = 60; // 買-6-値段
+  double bid_quantity7 = 61; // 買-7-数量
+  double bid_price7 = 62; // 買-7-値段
+  double bid_quantity8 = 63; // 買-8-数量
+  double bid_price8 = 64; // 買-8-値段
+  double bid_quantity9 = 65; // 買-9-数量
+  double bid_price9 = 66; // 買-9-値段
+  double bid_quantity10 = 67; // 買-10-数量
+  double bid_price10 = 68; // 買-10-値段
+  double bid_quantity_under = 69; // 買-UNDER
+  double vwap = 70; // VWAP
+  double prp = 71; // PRP
+}
+
+message BusinessDayRequest {}
+
+message BusinessDayResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  repeated BusinessDay business_days = 2; // 日付情報
+}
+
+message BusinessDay {
+  DayKey day_key = 1; // 日付KEY
+  google.protobuf.Timestamp prev_day1 = 2; // 1営業日前
+  google.protobuf.Timestamp prev_day2 = 3; // 2営業日前
+  google.protobuf.Timestamp prev_day3 = 4; // 3営業日前
+  google.protobuf.Timestamp today = 5; // 当日日付
+  google.protobuf.Timestamp next_day1 = 6; // 翌1営業日
+  google.protobuf.Timestamp next_day2 = 7; // 翌2営業日
+  google.protobuf.Timestamp next_day3 = 8; // 翌3営業日
+  google.protobuf.Timestamp next_day4 = 9; // 翌4営業日
+  google.protobuf.Timestamp next_day5 = 10; // 翌5営業日
+  google.protobuf.Timestamp next_day6 = 11; // 翌6営業日
+  google.protobuf.Timestamp next_day7 = 12; // 翌7営業日
+  google.protobuf.Timestamp next_day8 = 13; // 翌8営業日
+  google.protobuf.Timestamp next_day9 = 14; // 翌9営業日
+  google.protobuf.Timestamp next_day10 = 15; // 翌10営業日
+  google.protobuf.Timestamp delivery_day = 16; // 株式受渡日
+  google.protobuf.Timestamp provisional_delivery_day = 17; // 株式仮決受渡日
+  google.protobuf.Timestamp bond_delivery_day = 18; // 債券受渡日
+}
+
+message TickGroupRequest {}
+
+message TickGroupResponse {
+  CommonResponse common_response = 1; // レスポンス共通項目
+  repeated TickGroup tick_groups = 2; // 呼値
+}
+
+message TickGroup {
+  TickGroupType tick_group_type = 1; // 呼値の単位番号
+  google.protobuf.Timestamp start_date = 2; // 適用日
+  repeated TickGroupPrice tick_group_list = 3; // 呼値グループリスト
+  google.protobuf.Timestamp create_date = 4; // 作成日時
+  google.protobuf.Timestamp update_date = 5; // 更新日時
+}
+
+message TickGroupPrice {
+  int32 number = 1; // 番号
+  double base_price = 2;// 基準値段
+  double unit_price = 3; // 呼値値段
+  int32 digits = 4; // 小数点桁数
 }
 
 enum ErrorNo {
@@ -121,4 +543,414 @@ enum SpecificAccountType {
   SPECIFIC_ACCOUNT_TYPE_GENERAL = 1; // 一般
   SPECIFIC_ACCOUNT_TYPE_NOTHING = 2; // 特定源泉徴収なし
   SPECIFIC_ACCOUNT_TYPE_WITHHOLDING = 3; // 特定源泉徴収あり
+}
+
+enum DeliveryAccountType {
+  DELIVERY_ACCOUNT_TYPE_UNSPECIFIED = 0;  // 未指定
+  DELIVERY_ACCOUNT_TYPE_UNUSED = 1;  // 信用の場合のみ現引、現渡以外の取引
+  DELIVERY_ACCOUNT_TYPE_SPECIFIC = 2;  // 特定
+  DELIVERY_ACCOUNT_TYPE_GENERAL = 3;  // 一般
+  DELIVERY_ACCOUNT_TYPE_NISA = 4;  // NISA
+}
+
+enum Exchange {
+  EXCHANGE_UNSPECIFIED = 0; // 未指定
+  EXCHANGE_TOUSHOU = 1; // 東証
+  EXCHANGE_MEISHOU = 2; // 名証
+  EXCHANGE_FUKUSHOU = 3; // 福証
+  EXCHANGE_SATSUSHOU = 4; // 札証
+  EXCHANGE_STOPPING = 5; // 取引不可
+}
+
+enum Side {
+  SIDE_UNSPECIFIED = 0; // 未指定
+  SIDE_SELL = 1; // 売
+  SIDE_BUY = 2; // 買
+  SIDE_DELIVERY = 3; // 現渡
+  SIDE_RECEIPT = 4; // 現引
+}
+
+enum ExecutionTiming {
+  EXECUTION_TIMING_UNSPECIFIED = 0; // 未指定
+  EXECUTION_TIMING_NO_CHANGE = 1; // 変更なし
+  EXECUTION_TIMING_NORMAL = 2; // 指定なし
+  EXECUTION_TIMING_OPENING = 3; // 寄付
+  EXECUTION_TIMING_CLOSING = 4; // 引け
+  EXECUTION_TIMING_FUNARI = 5; // 不成
+}
+
+enum TradeType {
+  TRADE_TYPE_UNSPECIFIED = 0; // 未指定
+  TRADE_TYPE_STOCK = 1; // 現物
+  TRADE_TYPE_STANDARD_ENTRY = 2; // 新規(制度信用6ヶ月)
+  TRADE_TYPE_STANDARD_EXIT = 3; // 返済(制度信用6ヶ月)
+  TRADE_TYPE_NEGOTIATE_ENTRY = 4; // 新規(一般信用6ヶ月)
+  TRADE_TYPE_NEGOTIATE_EXIT = 5; // 返済(一般信用6ヶ月)
+}
+
+enum StopOrderType {
+  STOP_ORDER_TYPE_UNSPECIFIED = 0; // 未指定
+  STOP_ORDER_TYPE_NORMAL = 1; // 通常
+  STOP_ORDER_TYPE_STOP = 2; // 逆指値
+  STOP_ORDER_TYPE_OCO = 3; // 通常 + 逆指値
+}
+
+enum ExitPositionType {
+  EXIT_POSITION_TYPE_UNSPECIFIED = 0; // 未指定
+  EXIT_POSITION_TYPE_NO_SELECTED = 1; // 指定なし(現物または新規)
+  EXIT_POSITION_TYPE_UNUSED = 2; // 未使用
+  EXIT_POSITION_TYPE_POSITION_NUMBER = 3; // 個別指定
+  EXIT_POSITION_TYPE_DAY_ASC = 4; // 建日順
+  EXIT_POSITION_TYPE_PROFIT_DESC = 5; // 単価益順
+  EXIT_POSITION_TYPE_PROFIT_ASC = 6; // 単価損順
+}
+
+enum OrderInquiryStatus {
+  ORDER_INQUIRY_STATUS_UNSPECIFIED = 0; // 未指定
+  ORDER_INQUIRY_STATUS_IN_ORDER = 1; // 未約定・注文中
+  ORDER_INQUIRY_STATUS_DONE = 2; // 全部約定
+  ORDER_INQUIRY_STATUS_PART = 3; // 部分約定
+  ORDER_INQUIRY_STATUS_EDITABLE = 4; // 訂正取消可能な注文
+  ORDER_INQUIRY_STATUS_PART_IN_ORDER = 5; // 未約定 + 一部約定
+}
+
+enum ExitTermType {
+  EXIT_TERM_TYPE_UNSPECIFIED = 0; // 未指定
+  EXIT_TERM_TYPE_NO_LIMIT = 1; // 期限なし
+  EXIT_TERM_TYPE_STANDARD_MARGIN_6M = 2; // 制度信用6ヶ月
+  EXIT_TERM_TYPE_STANDARD_MARGIN_NO_LIMIT = 3; // 制度信用無期限
+  EXIT_TERM_TYPE_NEGOTIATE_MARGIN_6M = 4; // 一般信用6ヶ月
+  EXIT_TERM_TYPE_NEGOTIATE_MARGIN_NO_LIMIT = 5; // 一般信用無期限
+}
+
+enum ExecutionType {
+  EXECUTION_TYPE_UNSPECIFIED = 0; // 未指定
+  EXECUTION_TYPE_UNUSED = 1; // 未使用
+  EXECUTION_TYPE_MARKET = 2; // 成行
+  EXECUTION_TYPE_LIMIT = 3; // 指値
+  EXECUTION_TYPE_HIGHER = 4; // 親注文より高い
+  EXECUTION_TYPE_LOWER = 5; // 親注文より低い
+}
+
+enum TriggerType {
+  TRIGGER_TYPE_UNSPECIFIED = 0;// 未指定
+  TRIGGER_TYPE_NO_FIRED = 1;// 未発火
+  TRIGGER_TYPE_AUTO = 2;// 自動
+  TRIGGER_TYPE_MANUAL_ORDER = 3;// 手動発注
+  TRIGGER_TYPE_MANUAL_EXPIRED = 4;// 手動失効
+}
+
+enum PartContractType {
+  PART_CONTRACT_TYPE_UNSPECIFIED = 0; // 未指定
+  PART_CONTRACT_TYPE_UNUSED = 1; // 未使用
+  PART_CONTRACT_TYPE_PART = 2; // 分割約定
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0; // 未指定
+  ORDER_STATUS_RECEIVED = 1; // 受付未済
+  ORDER_STATUS_IN_ORDER = 2; // 未約定
+  ORDER_STATUS_ERROR = 3; // 受付エラー
+  ORDER_STATUS_IN_CORRECT = 4; // 訂正中
+  ORDER_STATUS_CORRECTED = 5; // 訂正完了
+  ORDER_STATUS_CORRECT_FAILED = 6; // 訂正失敗
+  ORDER_STATUS_IN_CANCEL = 7; // 取消中
+  ORDER_STATUS_CANCELED = 8; // 取消完了
+  ORDER_STATUS_CANCEL_FAILED = 9; // 取消失敗
+  ORDER_STATUS_PART = 10; // 一部約定
+  ORDER_STATUS_DONE = 11; // 全部約定
+  ORDER_STATUS_PART_EXPIRED = 12; // 一部失効
+  ORDER_STATUS_EXPIRED = 13; // 全部失効
+  ORDER_STATUS_WAIT = 14; // 発注待ち
+  ORDER_STATUS_INVALID = 15; // 無効
+  ORDER_STATUS_TRIGGER = 16; // 切替注文・逆指注文(切替中)
+  ORDER_STATUS_TRIGGERED = 17; // 切替完了・逆指注文(未約定)
+  ORDER_STATUS_TRIGGER_FAILED = 18; // 切替失敗・逆指注文(失敗)
+  ORDER_STATUS_CARRYOVER_FAILED = 19; // 繰越失効
+  ORDER_STATUS_IN_ORDER_STOP = 20; // 逆指値発注中
+}
+
+enum ContractStatus {
+  CONTRACT_STATUS_UNSPECIFIED = 0; // 未指定
+  CONTRACT_STATUS_IN_ORDER = 1; // 未約定
+  CONTRACT_STATUS_PART = 2; // 部分約定
+  CONTRACT_STATUS_DONE = 3; // 全部約定
+  CONTRACT_STATUS_IN_CONTRACT = 4; // 約定中
+}
+
+enum CarryOverType {
+  CARRY_OVER_TYPE_UNSPECIFIED = 0; // 未指定
+  CARRY_OVER_TYPE_TODAY = 1; // 当日
+  CARRY_OVER_TYPE_CARRY = 2; // 繰越注文
+  CARRY_OVER_TYPE_INVALID = 3; // 無効
+}
+
+enum CorrectCancelType {
+  CORRECT_CANCEL_TYPE_UNSPECIFIED = 0; // 未指定
+  CORRECT_CANCEL_TYPE_CORRECTABLE = 1; // 訂正・取消可能
+  CORRECT_CANCEL_TYPE_CANCELABLE = 2; // 取消可能
+  CORRECT_CANCEL_TYPE_INVALID = 3; // 訂正・取消不可
+}
+
+enum Channel {
+  CHANNEL_UNSPECIFIED = 0;// 未指定
+  CHANNEL_MEET = 1;// 対面
+  CHANNEL_PC = 2;// PC
+  CHANNEL_CALL_CENTER = 3;// コールセンター
+  CHANNEL_CALL_CENTER2 = 4;// コールセンター
+  CHANNEL_CALL_CENTER3 = 5;// コールセンター
+  CHANNEL_MOBILE = 6;// モバイル
+  CHANNEL_RICH = 7;// リッチ
+  CHANNEL_SMARTPHONE = 8;// スマホ・タブレット
+  CHANNEL_IPAD_APP = 9;// iPadアプリ
+  CHANNEL_HOST = 10;// HOST
+}
+
+enum StockMasterColumn {
+  STOCK_MASTER_COLUMN_UNSPECIFIED = 0; // 銘柄コード
+  STOCK_MASTER_COLUMN_ISSUE_CODE = 1; // 銘柄コード
+  STOCK_MASTER_COLUMN_NAME = 2; // 銘柄名
+  STOCK_MASTER_COLUMN_SHORT_NAME = 3; // 銘柄名略称
+  STOCK_MASTER_COLUMN_KANA = 4; // 銘柄名(カナ)
+  STOCK_MASTER_COLUMN_ALPHABET = 5; // 銘柄名(英語表記)
+  STOCK_MASTER_COLUMN_SPECIFIC_TARGET = 6; // 特定口座対象C
+  STOCK_MASTER_COLUMN_TAX_FREE = 7; // 非課税対象C
+  STOCK_MASTER_COLUMN_SHARED_STOCKS = 8; // 上場発行株数
+  STOCK_MASTER_COLUMN_EX_RIGHT = 9; // 権利落ちフラグ
+  STOCK_MASTER_COLUMN_LAST_RIGHT_DAY = 10; // 権利付最終日
+  STOCK_MASTER_COLUMN_LISTING_TYPE = 11; // 上場・入札C
+  STOCK_MASTER_COLUMN_RELEASE_TRADING_DATE = 12; // 入札解除日
+  STOCK_MASTER_COLUMN_TRADING_DATE = 13; // 入札日
+  STOCK_MASTER_COLUMN_TRADING_UNIT = 14; // 売買単位
+  STOCK_MASTER_COLUMN_NEXT_TRADING_UNIT = 15; // 売買単位(翌営業日)
+  STOCK_MASTER_COLUMN_STOP_TRADING_TYPE = 16; // 売買停止C
+  STOCK_MASTER_COLUMN_START_PUBLICATION_DATE = 17; // 発行開始日
+  STOCK_MASTER_COLUMN_LAST_PUBLICATION_DATE = 18; // 発行最終日
+  STOCK_MASTER_COLUMN_SETTLEMENT_TYPE = 19; // 決算C
+  STOCK_MASTER_COLUMN_SETTLEMENT_DATE = 20; // 決算日
+  STOCK_MASTER_COLUMN_LISTING_DATE = 21; // 上場応答日
+  STOCK_MASTER_COLUMN_EXPIRE_DATE_2_TYPE = 22; // 二類期日C
+  STOCK_MASTER_COLUMN_LARGE_UNIT = 23; // 大口株数
+  STOCK_MASTER_COLUMN_LARGE_AMOUNT = 24; // 大口金額
+  STOCK_MASTER_COLUMN_OUTPUT_TICKET_TYPE = 25; // 場伝票出力有無C
+  STOCK_MASTER_COLUMN_DEPOSIT_AMOUNT = 26; // 保証金代用掛目
+  STOCK_MASTER_COLUMN_DEPOSIT_VALUATION = 27; // 代用証券評価単価
+  STOCK_MASTER_COLUMN_ORGANIZATION_TYPE = 28; // 機構参加C
+  STOCK_MASTER_COLUMN_PROVISIONAL_TYPE = 29; // 仮決済C
+  STOCK_MASTER_COLUMN_PRIMARY_EXCHANGE = 30; // 優先市場
+  STOCK_MASTER_COLUMN_INDEFINITE_PERIOD_TYPE = 31; // 無期限対象C
+  STOCK_MASTER_COLUMN_INDUSTRY_CODE = 32; // 業種コード
+  STOCK_MASTER_COLUMN_INDUSTRY_NAME = 33; // 業種コード名
+  STOCK_MASTER_COLUMN_SOR_TARGET_TYPE = 34; // SOR対象銘柄C
+  STOCK_MASTER_COLUMN_CREATE_DATETIME = 35; // 作成日時
+  STOCK_MASTER_COLUMN_UPDATE_DATETIME = 36; // 更新日時
+  STOCK_MASTER_COLUMN_UPDATE_NUMBER = 37; // 更新通番
+}
+
+enum TaxFree {
+  TAX_FREE_UNSPECIFIED = 0; // 未指定
+  TAX_FREE_UN_USED = 1; // 通常(無)
+  TAX_FREE_VALID = 2; // 非課税参加
+}
+
+enum ExRightType {
+  EX_RIGHT_TYPE_UNSPECIFIED = 0;// 未指定
+  EX_RIGHT_TYPE_NOTHING = 1;// 権利落なし
+  EX_RIGHT_TYPE_STOCK_SPLIT = 2;// 新株権利落ち
+  EX_RIGHT_TYPE_DIVIDEND = 3;// 配当(中間)権利落ち
+  EX_RIGHT_TYPE_OTHER = 4;// その他権利落ち
+  EX_RIGHT_TYPE_DIVIDEND_AND_OTHER = 5;// その他・配当(中間)権利落ち
+  EX_RIGHT_TYPE_STOCK_SPLIT_AND_OTHER = 6;// 新株・その他権利落ち
+  EX_RIGHT_TYPE_STOCK_SPLIT_AND_OTHER_MIDDLE = 7;// 新株・その他(中間)権利落ち
+}
+
+enum ListingType {
+  LISTING_TYPE_UNSPECIFIED = 0; // 未指定
+  LISTING_TYPE_UN_USED = 1; // 通常(無)
+  LISTING_TYPE_NEWEST = 2; // 上場1年未満銘柄
+  LISTING_TYPE_GENERAL = 3; // 一般入札
+  LISTING_TYPE_RIGHT = 4; // 権利入札
+  LISTING_TYPE_OFFER = 5; // 公募入札
+  LISTING_TYPE_SELLING = 6; // 売出し
+  LISTING_TYPE_OPEN_BUY = 7; // 公開買付
+  LISTING_TYPE_TRANSMISSION = 8; // 媒介
+}
+
+enum StopTradingType {
+  STOP_TRADING_TYPE_UNSPECIFIED = 0; // 未指定
+  STOP_TRADING_TYPE_UN_USED = 1; // 通常(無)
+  STOP_TRADING_TYPE_RELEASE = 2; // 解除
+  STOP_TRADING_TYPE_STOPPING = 3; // 停止中
+}
+
+enum SettlementType {
+  SETTLEMENT_TYPE_UNSPECIFIED = 0; // 未指定
+  SETTLEMENT_TYPE_CAPITAL_INCREASE = 1; // 有償割当増資
+  SETTLEMENT_TYPE_SPLIT = 2; // 株式分割
+  SETTLEMENT_TYPE_ASSIGNMENT = 3; // 無償割当
+}
+
+enum StockExchangeMasterColumn {
+  STOCK_EXCHANGE_MASTER_COLUMN_UNSPECIFIED = 0; // 銘柄コード
+  STOCK_EXCHANGE_MASTER_COLUMN_ISSUE_CODE = 1; // 銘柄コード
+  STOCK_EXCHANGE_MASTER_COLUMN_EXCHANGE = 2; // 上場市場
+  STOCK_EXCHANGE_MASTER_COLUMN_STOCK_SYSTEM_TYPE = 3; // システムC
+  STOCK_EXCHANGE_MASTER_COLUMN_UNDER_LIMIT_PRICE = 4; // 値幅下限
+  STOCK_EXCHANGE_MASTER_COLUMN_UPPER_LIMIT_PRICE = 5; // 値幅上限
+  STOCK_EXCHANGE_MASTER_COLUMN_SYMBOL_CATEGORY = 6; // 銘柄区分C
+  STOCK_EXCHANGE_MASTER_COLUMN_LIMIT_PRICE_EXCHANGE = 7; // 値幅市場C
+  STOCK_EXCHANGE_MASTER_COLUMN_MARGIN_TYPE = 8; // 信用C
+  STOCK_EXCHANGE_MASTER_COLUMN_LISTING_DATE = 9; // 新規上場日
+  STOCK_EXCHANGE_MASTER_COLUMN_LIMIT_PRICE_DATE = 10; // 値幅期限日
+  STOCK_EXCHANGE_MASTER_COLUMN_LIMIT_PRICE_CATEGORY = 11; // 値幅規制C
+  STOCK_EXCHANGE_MASTER_COLUMN_LIMIT_PRICE_VALUE = 12; // 値幅規制値
+  STOCK_EXCHANGE_MASTER_COLUMN_CONFIRM_LIMIT_PRICE = 13; // 値幅チェック可否C
+  STOCK_EXCHANGE_MASTER_COLUMN_SECTION = 14; // 銘柄部別C
+  STOCK_EXCHANGE_MASTER_COLUMN_PREV_CLOSE_PRICE = 15; // 前日終値
+  STOCK_EXCHANGE_MASTER_COLUMN_CALCULATE_LIMIT_PRICE_EXCHANGE = 16; // 値幅算出市場C
+  STOCK_EXCHANGE_MASTER_COLUMN_REGULATION1 = 17; // 銘柄規制1C
+  STOCK_EXCHANGE_MASTER_COLUMN_REGULATION2 = 18; // 銘柄規制2C
+  STOCK_EXCHANGE_MASTER_COLUMN_SECTION_TYPE = 19; // 上場区分
+  STOCK_EXCHANGE_MASTER_COLUMN_DELISTING_DATE = 20; // 上場廃止日
+  STOCK_EXCHANGE_MASTER_COLUMN_TRADING_UNIT = 21; // 売買単位
+  STOCK_EXCHANGE_MASTER_COLUMN_NEXT_TRADING_UNIT = 22; // 売買単位(翌営業日)
+  STOCK_EXCHANGE_MASTER_COLUMN_TICK_GROUP_TYPE = 23; // 呼値の単位番号
+  STOCK_EXCHANGE_MASTER_COLUMN_NEXT_TICK_GROUP_TYPE = 24; // 呼値の単位番号(翌営業日)
+  STOCK_EXCHANGE_MASTER_COLUMN_INFORMATION_SOURCE = 25; // 情報系ソース
+  STOCK_EXCHANGE_MASTER_COLUMN_INFORMATION_CODE = 26; // 情報系コード
+  STOCK_EXCHANGE_MASTER_COLUMN_OFFER_PRICE = 27; // 公募価格
+  STOCK_EXCHANGE_MASTER_COLUMN_CREATE_DATETIME = 28; // 作成日時
+  STOCK_EXCHANGE_MASTER_COLUMN_UPDATE_DATETIME = 29; // 更新日時
+  STOCK_EXCHANGE_MASTER_COLUMN_UPDATE_NUMBER = 30; // 更新通番
+}
+
+enum MarginType {
+  MARGIN_TYPE_UNSPECIFIED = 0; // 未指定
+  MARGIN_TYPE_MARGIN_TRADING = 1; // 貸借銘柄
+  MARGIN_TYPE_STANDARD = 2; // 信用制度銘柄
+  MARGIN_TYPE_NEGOTIATE = 3; // 一般信用銘柄
+}
+
+enum TickGroupType {
+  TICK_GROUP_TYPE_UNSPECIFIED = 0; // 未指定
+  TICK_GROUP_TYPE_STOCK1 = 1; // 株式1
+  TICK_GROUP_TYPE_STOCK2 = 2; // 株式2
+  TICK_GROUP_TYPE_STOCK3 = 3; // 株式3
+  TICK_GROUP_TYPE_BOND1 = 4; // 債券1
+  TICK_GROUP_TYPE_BOND2 = 5; // 債券2
+  TICK_GROUP_TYPE_NK225 = 6; // 日経225先物
+  TICK_GROUP_TYPE_NK225_MINI = 7; // 日経225mini先物
+  TICK_GROUP_TYPE_NK225_OP = 8; // 日経225OP
+}
+
+enum MarketPriceColumn {
+  MARKET_PRICE_COLUMN_UNSPECIFIED = 0; // 所属
+  MARKET_PRICE_COLUMN_SECTION = 1; // 所属
+  MARKET_PRICE_COLUMN_CURRENT_PRICE = 2; // 現在値
+  MARKET_PRICE_COLUMN_CURRENT_PRICE_TIME = 3; // 現在値時刻
+  MARKET_PRICE_COLUMN_CHANGE_PRICE_TYPE = 4; // 現値前値比較
+  MARKET_PRICE_COLUMN_PREV_DAY_RATIO = 5; // 前日比
+  MARKET_PRICE_COLUMN_PREV_DAY_PERCENT = 6; // 騰落率
+  MARKET_PRICE_COLUMN_OPEN_PRICE = 7; // 始値
+  MARKET_PRICE_COLUMN_OPEN_PRICE_TIME = 8; // 始値時刻
+  MARKET_PRICE_COLUMN_HIGH_PRICE = 9; // 高値
+  MARKET_PRICE_COLUMN_HIGH_PRICE_TIME = 10; // 高値時刻
+  MARKET_PRICE_COLUMN_LOW_PRICE = 11; // 安値
+  MARKET_PRICE_COLUMN_LOW_PRICE_TIME = 12; // 安値時刻
+  MARKET_PRICE_COLUMN_VOLUME = 13; // 出来高
+  MARKET_PRICE_COLUMN_ASK_SIGN = 14; // 売気配値種類
+  MARKET_PRICE_COLUMN_ASK_PRICE = 15; // 売気配値
+  MARKET_PRICE_COLUMN_ASK_QUANTITY = 16; // 売気配数量
+  MARKET_PRICE_COLUMN_BID_SIGN = 17; // 買気配値種類
+  MARKET_PRICE_COLUMN_BID_PRICE = 18; // 買気配値
+  MARKET_PRICE_COLUMN_BID_QUANTITY = 19; // 買気配数量
+  MARKET_PRICE_COLUMN_EX_RIGHT_TYPE = 20; // 配当落銘柄区分
+  MARKET_PRICE_COLUMN_DISCONTINUITY_TYPE = 21; // 不連続要因銘柄区分
+  MARKET_PRICE_COLUMN_STOP_HIGH = 22; // 日通し高値フラグ
+  MARKET_PRICE_COLUMN_STOP_LOW = 23; // 日通し安値フラグ
+  MARKET_PRICE_COLUMN_TRADING_AMOUNT = 24; // 売買代金
+  MARKET_PRICE_COLUMN_ASK_QUANTITY_MARKET = 25; // 売数量(成行)
+  MARKET_PRICE_COLUMN_BID_QUANTITY_MARKET = 26; // 買数量(成行)
+  MARKET_PRICE_COLUMN_ASK_QUANTITY_OVER = 27; // 売-OVER
+  MARKET_PRICE_COLUMN_ASK_QUANTITY10 = 28; // 売-10-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE10 = 29; // 売-10-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY9 = 30; // 売-9-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE9 = 31; // 売-9-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY8 = 32; // 売-8-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE8 = 33; // 売-8-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY7 = 34; // 売-7-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE7 = 35; // 売-7-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY6 = 36; // 売-6-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE6 = 37; // 売-6-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY5 = 38; // 売-5-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE5 = 39; // 売-5-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY4 = 40; // 売-4-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE4 = 41; // 売-4-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY3 = 42; // 売-3-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE3 = 43; // 売-3-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY2 = 44; // 売-2-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE2 = 45; // 売-2-値段
+  MARKET_PRICE_COLUMN_ASK_QUANTITY1 = 46; // 売-1-数量
+  MARKET_PRICE_COLUMN_ASK_PRICE1 = 47; // 売-1-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY1 = 48; // 買-1-数量
+  MARKET_PRICE_COLUMN_BID_PRICE1 = 49; // 買-1-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY2 = 50; // 買-2-数量
+  MARKET_PRICE_COLUMN_BID_PRICE2 = 51; // 買-2-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY3 = 52; // 買-3-数量
+  MARKET_PRICE_COLUMN_BID_PRICE3 = 53; // 買-3-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY4 = 54; // 買-4-数量
+  MARKET_PRICE_COLUMN_BID_PRICE4 = 55; // 買-4-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY5 = 56; // 買-5-数量
+  MARKET_PRICE_COLUMN_BID_PRICE5 = 57; // 買-5-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY6 = 58; // 買-6-数量
+  MARKET_PRICE_COLUMN_BID_PRICE6 = 59; // 買-6-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY7 = 60; // 買-7-数量
+  MARKET_PRICE_COLUMN_BID_PRICE7 = 61; // 買-7-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY8 = 62; // 買-8-数量
+  MARKET_PRICE_COLUMN_BID_PRICE8 = 63; // 買-8-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY9 = 64; // 買-9-数量
+  MARKET_PRICE_COLUMN_BID_PRICE9 = 65; // 買-9-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY10 = 66; // 買-10-数量
+  MARKET_PRICE_COLUMN_BID_PRICE10 = 67; // 買-10-値段
+  MARKET_PRICE_COLUMN_BID_QUANTITY_UNDER = 68; // 買-UNDER
+  MARKET_PRICE_COLUMN_VWAP = 69; // VWAP
+  MARKET_PRICE_COLUMN_PRP = 70; // 前日終値
+}
+
+enum ChangePriceType {
+  CHANGE_PRICE_TYPE_UNSPECIFIED = 0; // 未指定
+  CHANGE_PRICE_TYPE_NO_CHANGE = 1; // 事象なし
+  CHANGE_PRICE_TYPE_EQUAL = 2; // 現値=前値
+  CHANGE_PRICE_TYPE_RISE = 3; // 現値>前値
+  CHANGE_PRICE_TYPE_DOWN = 4; // 現値<前値
+  CHANGE_PRICE_TYPE_OPEN_AFTER_STOPPING = 5; // 中断板寄後の始値
+  CHANGE_PRICE_TYPE_ZARABA = 6; // ザラバ引け
+  CHANGE_PRICE_TYPE_CLOSE = 7; // 板寄引け
+  CHANGE_PRICE_TYPE_CLOSE_AT_STOPPING = 8; // 中断引け
+  CHANGE_PRICE_TYPE_STOPPING = 9; // 売買停止引け
+}
+
+enum IndicationPriceType {
+  INDICATION_PRICE_TYPE_UNSPECIFIED = 0; // 未指定
+  INDICATION_PRICE_TYPE_NO_CHANGE = 1; // 事象なし
+  INDICATION_PRICE_TYPE_GENERAL = 2; // 一般気配
+  INDICATION_PRICE_TYPE_SPECIFIC = 3; // 特別気配
+  INDICATION_PRICE_TYPE_BEFORE_OPENING = 4; // 寄前気配
+  INDICATION_PRICE_TYPE_BEFORE_CLOSING = 5; // 停止前特別気配
+  INDICATION_PRICE_TYPE_CONTINUANCE = 6; // 連続約定気配
+  INDICATION_PRICE_TYPE_CONTINUANCE_BEFORE_CLOSING = 7; // 停止前の連続約定気配
+  INDICATION_PRICE_TYPE_MOVING = 8; // 一般気配、買上がり・売下がり中
+}
+
+enum CurrentPriceType {
+  CURRENT_PRICE_TYPE_UNSPECIFIED = 0; // 未指定
+  CURRENT_PRICE_TYPE_NO_CHANGE = 1; // 事象なし
+  CURRENT_PRICE_TYPE_STOP_HIGH = 2; // ストップ高
+  CURRENT_PRICE_TYPE_STOP_LOW = 3; // ストップ安
+}
+
+enum DayKey {
+  DAY_KEY_UNSPECIFIED = 0; // 未指定
+  DAY_KEY_TODAY = 1; // 当日基準
+  DAY_KEY_NEXT_DAY = 2; // 翌日基準
 }
