@@ -2,6 +2,7 @@ package tachibana_grpc_server
 
 import (
 	"context"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"time"
 
@@ -27,6 +28,7 @@ func NewServer() Server {
 type Server interface {
 	pb.TachibanaServiceServer
 	StartScheduler()
+	LoggingMiddleware() grpc.UnaryServerInterceptor
 }
 
 type server struct {

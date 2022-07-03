@@ -24,7 +24,7 @@ func main() {
 	tachibana := tachibana_grpc_server.NewServer()
 	go tachibana.StartScheduler()
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(tachibana.LoggingMiddleware()))
 	pb.RegisterTachibanaServiceServer(s, tachibana)
 	if err := s.Serve(ln); err != nil {
 		log.Fatalln(err)
