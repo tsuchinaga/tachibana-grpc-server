@@ -1,2 +1,8 @@
 *.iml
 .idea
+
+*.out
+*.db
+
+logs/*
+!logs/.gitkeep

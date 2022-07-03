@@ -15,7 +15,8 @@ func NewServer() Server {
 			client:         tachibana.NewClient(tachibana.EnvironmentProduction, tachibana.ApiVersionLatest),
 			requestTimeout: 3 * time.Second,
 		},
-		clock: &clock{},
+		clock:  &clock{},
+		logger: &logger{},
 		sessionStore: &sessionStore{
 			sessions:     map[string]*accountSession{},
 			clientTokens: map[string]string{},
@@ -32,6 +33,7 @@ type server struct {
 	pb.UnimplementedTachibanaServiceServer
 	tachibana    iTachibanaApi
 	clock        iClock
+	logger       iLogger
 	sessionStore iSessionStore
 }
 
