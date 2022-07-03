@@ -10,6 +10,7 @@ type iSessionStore interface {
 	save(sessionToken string, clientToken string, session *accountSession)
 	addClientToken(sessionToken string, clientToken string)
 	removeClient(token string)
+	clear()
 }
 
 type sessionStore struct {
@@ -57,4 +58,12 @@ func (s *sessionStore) removeClient(token string) {
 	defer s.mtx.Unlock()
 
 	delete(s.clientTokens, token)
+}
+
+func (s *sessionStore) clear() {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	s.sessions = map[string]*accountSession{}
+	s.clientTokens = map[string]string{}
 }

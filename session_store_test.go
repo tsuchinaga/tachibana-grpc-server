@@ -324,3 +324,48 @@ func Test_sessionStore_removeClient(t *testing.T) {
 		})
 	}
 }
+
+func Test_sessionStore_clear(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name             string
+		store            *sessionStore
+		wantSessions     map[string]*accountSession
+		wantClientTokens map[string]string
+	}{
+		{name: "元からマップが空なら何もしない",
+			store: &sessionStore{
+				sessions:     map[string]*accountSession{},
+				clientTokens: map[string]string{},
+			},
+			wantSessions:     map[string]*accountSession{},
+			wantClientTokens: map[string]string{}},
+		{name: "マップに値があってもすべて削除する",
+			store: &sessionStore{
+				sessions: map[string]*accountSession{
+					"token001": {},
+					"token002": {},
+				},
+				clientTokens: map[string]string{
+					"client-token101": "token001",
+					"client-token102": "token001",
+					"client-token201": "token002",
+				},
+			},
+			wantSessions:     map[string]*accountSession{},
+			wantClientTokens: map[string]string{}},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			test.store.clear()
+			if !reflect.DeepEqual(test.wantSessions, test.store.sessions) || !reflect.DeepEqual(test.wantClientTokens, test.store.clientTokens) {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(),
+					test.wantSessions, test.wantClientTokens,
+					test.store.sessions, test.store.clientTokens)
+			}
+		})
+	}
+}

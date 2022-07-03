@@ -9,7 +9,7 @@ import (
 	pb "gitlab.com/tsuchinaga/tachibana-grpc-server/tachibanapb"
 )
 
-func NewServer() pb.TachibanaServiceServer {
+func NewServer() Server {
 	return &server{
 		tachibana: &tachibanaApi{
 			client:         tachibana.NewClient(tachibana.EnvironmentProduction, tachibana.ApiVersionLatest),
@@ -21,6 +21,11 @@ func NewServer() pb.TachibanaServiceServer {
 			clientTokens: map[string]string{},
 		},
 	}
+}
+
+type Server interface {
+	pb.TachibanaServiceServer
+	StartScheduler()
 }
 
 type server struct {

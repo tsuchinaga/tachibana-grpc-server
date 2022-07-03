@@ -20,8 +20,12 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	tachibana := tachibana_grpc_server.NewServer()
+	go tachibana.StartScheduler()
+
 	s := grpc.NewServer()
-	pb.RegisterTachibanaServiceServer(s, tachibana_grpc_server.NewServer())
+	pb.RegisterTachibanaServiceServer(s, tachibana)
 	if err := s.Serve(ln); err != nil {
 		log.Fatalln(err)
 	}
