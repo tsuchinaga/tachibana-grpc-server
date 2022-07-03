@@ -9,7 +9,7 @@ import (
 func (s *server) LoggingMiddleware() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		header, _ := metadata.FromIncomingContext(ctx)
-		s.logger.request("header:", header, "request:", req)
+		s.logger.request("header:", header, "method:", info.FullMethod, "request:", req)
 		return handler(ctx, req)
 	}
 }
