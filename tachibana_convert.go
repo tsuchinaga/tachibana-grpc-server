@@ -567,6 +567,8 @@ func (t *tachibanaApi) fromTickGroupResponse(res []*tachibana.TickGroupResponse)
 
 	if len(res) > 0 {
 		commonResponse = t.fromCommonResponse(&res[len(res)-1].CommonResponse)
+		tickGroups = make([]*pb.TickGroup, len(res))
+
 		for i, tg := range res {
 			tickGroups[i] = t.fromTickGroup(tg)
 		}
