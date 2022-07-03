@@ -3,6 +3,7 @@ package tachibana_grpc_server
 import (
 	"context"
 	"google.golang.org/grpc/metadata"
+	"time"
 
 	tachibana "gitlab.com/tsuchinaga/go-tachibanaapi"
 	pb "gitlab.com/tsuchinaga/tachibana-grpc-server/tachibanapb"
@@ -11,7 +12,8 @@ import (
 func NewServer() pb.TachibanaServiceServer {
 	return &server{
 		tachibana: &tachibanaApi{
-			client: tachibana.NewClient(tachibana.EnvironmentProduction, tachibana.ApiVersionLatest),
+			client:         tachibana.NewClient(tachibana.EnvironmentProduction, tachibana.ApiVersionLatest),
+			requestTimeout: 3 * time.Second,
 		},
 		clock: &clock{},
 		sessionStore: &sessionStore{
