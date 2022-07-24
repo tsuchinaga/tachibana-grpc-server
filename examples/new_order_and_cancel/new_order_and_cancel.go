@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	conn, err := grpc.DialContext(context.Background(), "localhost:8900", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(context.Background(), examples.Target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalln(err)
 	}
