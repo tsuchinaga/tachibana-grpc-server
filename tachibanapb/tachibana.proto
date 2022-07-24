@@ -17,6 +17,7 @@ service TachibanaService {
   rpc MarketPrice(MarketPriceRequest) returns (MarketPriceResponse); // 時価関連情報
   rpc BusinessDay(BusinessDayRequest) returns (BusinessDayResponse); // 日付情報
   rpc TickGroup(TickGroupRequest) returns (TickGroupResponse); // 呼値
+  rpc Stream(StreamRequest) returns (stream StreamResponse); // イベント
 }
 
 message CommonResponse {
@@ -474,6 +475,109 @@ message TickGroupPrice {
   int32 digits = 4; // 小数点桁数
 }
 
+message StreamRequest {
+  repeated EventType event_types = 1; // 通知種別
+  bool receive_resend = 2; // 再送イベントを受け取るかどうか
+  repeated StreamIssue stream_issues = 3; // 株価ボード専用 銘柄情報
+}
+
+message StreamIssue {
+  string issue_code = 1; // 銘柄コード
+  Exchange exchange = 2; // 市場
+}
+
+message StreamResponse {
+  EventType event_type = 1; // 通知種別
+  int64 stream_number = 2; // int64
+  google.protobuf.Timestamp stream_date_time = 3; // 通知日時
+  ErrorNo error_no = 4; // エラー番号
+  string error_message = 5; // エラー文言
+  bytes body = 6; // レスポンス本文
+  bool is_first_time = 7; // 初回配信
+  // 8は時価情報配信に残しておく
+  ContractStreamResponse contract_stream_response = 9; // 注文約定通知イベント
+  NewsStreamResponse news_stream_response = 10; // ニュース通知イベント
+  SystemStatusStreamResponse system_status_stream_response = 11; // システムステータス
+  OperationStatusStreamResponse operation_status_stream_response = 12; // 運用ステータス
+}
+
+message ContractStreamResponse {
+  string provider = 1; // プロバイダ(情報提供元)
+  int64 event_no = 2; // イベント番号
+  StreamOrderType stream_order_type = 4; // 通知種別
+  string order_number = 5; // 注文番号
+  google.protobuf.Timestamp execution_date = 6; // 営業日
+  string parent_order_number = 7; // 親注文番号
+  bool parent_order = 8; // 注文種別
+  ProductType product_type = 9; // 商品種別
+  string issue_code = 10; // 銘柄コード
+  Exchange exchange = 11; // 市場コード
+  Side side = 12; // 売買区分
+  TradeType trade_type = 13; // 取引区分
+  ExecutionTiming execution_timing = 14; // 執行条件
+  ExecutionType execution_type = 15; // 注文値段区分
+  double price = 16; // 注文値段
+  double quantity = 17; // 注文数量
+  double cancel_quantity = 18; // 取消数量
+  double expire_quantity = 19; // 失効数量
+  double contract_quantity = 20; // 約定済数量
+  StreamOrderStatus stream_order_status = 21; // 注文ステータス
+  CarryOverType carry_over_type = 22; // 繰越フラグ
+  CancelOrderStatus cancel_order_status = 23; // 訂正取消ステータス
+  ContractStatus contract_status = 24; // 約定ステータス
+  google.protobuf.Timestamp expire_date = 25; // 有効期限
+  string security_expire_reason = 26; // 失効理由コード
+  double security_contract_price = 27; // 約定値段
+  double security_contract_quantity = 28; // 約定数量
+  string security_error = 29; // 取引所エラーコード
+  google.protobuf.Timestamp notify_datetime = 30; // 通知日時
+  string issue_name = 31; // 銘柄名称
+  ExecutionTiming correct_execution_timing = 32; // 訂正執行条件
+  double correct_contract_quantity = 33; // 訂正執行数量
+  ExecutionType correct_execution_type = 34; // 訂正注文値段区分
+  double correct_price = 35; // 訂正注文値段
+  double correct_quantity = 36; // 訂正注文数量
+  google.protobuf.Timestamp correct_expire_date = 37; // 訂正注文期限
+  StopOrderType correct_stop_order_type = 38; // 訂正逆指値条件
+  double correct_trigger_price = 39; // 訂正逆指値段区分
+  double correct_stop_order_price = 40; // 訂正逆指値段
+}
+
+message NewsStreamResponse {
+  string provider = 1; // プロバイダ(情報提供元)
+  int64 event_no = 2; // イベント番号
+  string news_id = 4; // ニュースID
+  google.protobuf.Timestamp news_datetime = 5; // ニュース日時
+  int64 num_of_category = 6; // ニュースカテゴリ数
+  repeated string categories = 7; // ニュースカテゴリリスト
+  int64 num_of_genre = 8; // ニュースジャンル数
+  repeated string genres = 9; // ニュースジャンルリスト
+  int64 num_of_issue = 10; // 関連銘柄コードリスト
+  repeated string issues = 11; // 関連銘柄コードリスト
+  string title = 12; // ニュースタイトル
+}
+
+message SystemStatusStreamResponse {
+  string provider = 1; // プロバイダ(情報提供元)
+  int64 event_no = 2; // イベント番号
+  google.protobuf.Timestamp update_datetime = 4; // 情報更新時間
+  ApprovalLogin approval_login = 5; // ログイン許可区分
+  SystemStatus system_status = 6; // システムステータス
+}
+
+message OperationStatusStreamResponse {
+  string provider = 1; // プロバイダ(情報提供元)
+  int64 event_no = 2; // イベント番号
+  google.protobuf.Timestamp update_datetime = 4; // 情報更新時間
+  Exchange exchange = 5; // 市場コード
+  string asset_code = 6; // 原資産コード
+  string product_type = 7; // 商品種別
+  string operation_category = 8; // 運用カテゴリー
+  string operation_unit = 9; // 運用ユニット
+  string business_day_type = 10; // 営業日区分
+  string operation_status = 11; // 運用ステータス
+}
+
 enum ErrorNo {
   ERROR_NO_UNSPECIFIED = 0; // 未指定
   ERROR_NO_NO_PROBLEM = 1; // 問題なし
@@ -546,11 +650,11 @@ enum SpecificAccountType {
 }
 
 enum DeliveryAccountType {
-  DELIVERY_ACCOUNT_TYPE_UNSPECIFIED = 0;  // 未指定
-  DELIVERY_ACCOUNT_TYPE_UNUSED = 1;  // 信用の場合のみ現引、現渡以外の取引
-  DELIVERY_ACCOUNT_TYPE_SPECIFIC = 2;  // 特定
-  DELIVERY_ACCOUNT_TYPE_GENERAL = 3;  // 一般
-  DELIVERY_ACCOUNT_TYPE_NISA = 4;  // NISA
+  DELIVERY_ACCOUNT_TYPE_UNSPECIFIED = 0; // 未指定
+  DELIVERY_ACCOUNT_TYPE_UNUSED = 1; // 信用の場合のみ現引、現渡以外の取引
+  DELIVERY_ACCOUNT_TYPE_SPECIFIC = 2; // 特定
+  DELIVERY_ACCOUNT_TYPE_GENERAL = 3; // 一般
+  DELIVERY_ACCOUNT_TYPE_NISA = 4; // NISA
 }
 
 enum Exchange {
@@ -953,4 +1057,82 @@ enum DayKey {
   DAY_KEY_UNSPECIFIED = 0; // 未指定
   DAY_KEY_TODAY = 1; // 当日基準
   DAY_KEY_NEXT_DAY = 2; // 翌日基準
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0; // 未指定
+  EVENT_TYPE_ERROR_STATUS = 1; // エラーステータス情報配信指定
+//  EVENT_TYPE_KEEPALIVE = 2; // キープアライブ情報配信指定
+  EVENT_TYPE_MARKET_PRICE = 3; // 時価情報配信指定
+  EVENT_TYPE_CONTRACT = 4; // 注文約定通知イベント配信指定
+  EVENT_TYPE_NEWS = 5; // ニュース通知イベント配信指定
+  EVENT_TYPE_SYSTEM_STATUS = 6; // システムステータス配信指定
+  EVENT_TYPE_OPERATION_STATUS = 7; // 運用ステータス配信指定
+}
+
+enum ApprovalLogin {
+  APPROVAL_LOGIN_UNSPECIFIED = 0; // 未指定
+  APPROVAL_LOGIN_UN_APPROVAL = 1; // 不許可
+  APPROVAL_LOGIN_APPROVAL = 2; // 許可
+  APPROVAL_LOGIN_OUT_OF_SERVICE = 3; // 不許可(サービス時間外)
+  APPROVAL_LOGIN_TESTING = 4; // 管理者のみ(テスト中)
+}
+
+enum SystemStatus {
+  SYSTEM_STATUS_UNSPECIFIED = 0; // 未指定
+  SYSTEM_STATUS_CLOSING = 1; // 閉局
+  SYSTEM_STATUS_OPENING = 2; // 開局
+  SYSTEM_STATUS_PAUSE = 3; // 一時停止
+}
+
+enum StreamOrderType {
+  STREAM_ORDER_TYPE_UNSPECIFIED = 0; // 未指定
+  STREAM_ORDER_TYPE_RECEIVE_ORDER = 1; // 注文受付
+  STREAM_ORDER_TYPE_RECEIVE_CORRECT = 2; // 訂正受付
+  STREAM_ORDER_TYPE_RECEIVE_CANCEL = 3; // 取消受付
+  STREAM_ORDER_TYPE_RECEIVE_ERROR = 4; // 注文受付エラー
+  STREAM_ORDER_TYPE_RECEIVE_CORRECT_ERROR = 5; // 訂正受付エラー
+  STREAM_ORDER_TYPE_RECEIVE_CANCEL_ERROR = 6; // 取消受付エラー
+  STREAM_ORDER_TYPE_ORDER_ERROR = 7; // 新規登録エラー
+  STREAM_ORDER_TYPE_CORRECT_ERROR = 8; // 訂正登録エラー
+  STREAM_ORDER_TYPE_CANCEL_ERROR = 9; // 取消登録エラー
+  STREAM_ORDER_TYPE_CORRECTED = 10; // 訂正完了
+  STREAM_ORDER_TYPE_CANCELED = 11; // 取消完了
+  STREAM_ORDER_TYPE_CONTRACT = 12; // 約定成立
+  STREAM_ORDER_TYPE_EXPIRE = 13; // 失効
+  STREAM_ORDER_TYPE_EXPIRE_CONTINUE = 14; // 失効（連続注文）
+  STREAM_ORDER_TYPE_CANCEL_CONTRACT = 15; // 約定取消
+  STREAM_ORDER_TYPE_CARRYOVER = 16; // 注文繰越
+  STREAM_ORDER_TYPE_RECEIVED = 17; // 注文状態変更
+}
+
+enum ProductType {
+  PRODUCT_TYPE_UNSPECIFIED = 0;  // 未指定
+  PRODUCT_TYPE_STOCK = 1; // 株式
+  PRODUCT_TYPE_FUTURE = 2; // 先物
+  PRODUCT_TYPE_OPTION = 3; // オプション
+}
+
+enum StreamOrderStatus {
+  STREAM_ORDER_STATUS_UNSPECIFIED = 0;  // 未指定
+  STREAM_ORDER_STATUS_NEW = 1; // 受付未済
+  STREAM_ORDER_STATUS_RECEIVED = 2; // 受付済
+  STREAM_ORDER_STATUS_ERROR = 3; // 受付エラー
+  STREAM_ORDER_STATUS_PART_EXPIRED = 4; // 一部失効
+  STREAM_ORDER_STATUS_EXPIRED = 5; // 全部失効
+  STREAM_ORDER_STATUS_CARRY_OVER_EXPIRED = 6; // 繰越失効
+}
+
+enum CancelOrderStatus {
+  CANCEL_ORDER_STATUS_UNSPECIFIED = 0;  // 未指定
+  CANCEL_ORDER_STATUS_NO_CORRECT = 1; // 訂正なし
+  CANCEL_ORDER_STATUS_INCORRECT = 2; // 訂正中
+  CANCEL_ORDER_STATUS_IN_CANCEL = 3; // 取消中
+  CANCEL_ORDER_STATUS_CORRECTED = 4; // 訂正完了
+  CANCEL_ORDER_STATUS_CANCELED = 5; // 取消完了
+  CANCEL_ORDER_STATUS_CORRECT_FAILED = 6; // 訂正失敗
+  CANCEL_ORDER_STATUS_CANCEL_FAILED = 7; // 取消失敗
+  CANCEL_ORDER_STATUS_SWITCH = 8; // 切替注文
+  CANCEL_ORDER_STATUS_SWITCHED = 9; // 切替完了
+  CANCEL_ORDER_STATUS_SWITCH_FAILED = 10; // 切替注文失敗
 }

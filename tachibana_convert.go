@@ -607,6 +607,189 @@ func (t *tachibanaApi) fromTickGroupPrice(tickGroup tachibana.TickGroup) *pb.Tic
 	}
 }
 
+func (t *tachibanaApi) toStreamRequest(req *pb.StreamRequest) *tachibana.StreamRequest {
+	r := &tachibana.StreamRequest{
+		ColumnNumber:      []int{},
+		IssueCodes:        []string{},
+		MarketCodes:       []string{},
+		StartStreamNumber: 0,
+		StreamEventTypes:  []tachibana.EventType{},
+	}
+
+	// event type
+	for _, e := range req.EventTypes {
+		r.StreamEventTypes = append(r.StreamEventTypes, t.toEventType(e))
+	}
+
+	// issues
+	for i, issue := range req.StreamIssues {
+		r.ColumnNumber = append(r.ColumnNumber, i+1)
+		r.IssueCodes = append(r.IssueCodes, issue.IssueCode)
+		r.MarketCodes = append(r.MarketCodes, string(t.toExchange(issue.Exchange)))
+	}
+
+	return r
+}
+
+func (t *tachibanaApi) fromStreamResponse(res tachibana.StreamResponse) *pb.StreamResponse {
+	switch v := res.(type) {
+	case *tachibana.CommonStreamResponse:
+		return t.fromCommonStreamResponse(v)
+	case *tachibana.ContractStreamResponse:
+		return t.fromContractStreamResponse(v)
+	case *tachibana.NewsStreamResponse:
+		return t.fromNewsStreamResponse(v)
+	case *tachibana.SystemStatusStreamResponse:
+		return t.fromSystemStatusStreamResponse(v)
+	case *tachibana.OperationStatusStreamResponse:
+		return t.fromOperationStatusStreamResponse(v)
+	}
+	return &pb.StreamResponse{
+		EventType:    t.fromEventType(res.GetEventType()),
+		ErrorNo:      t.fromErrorNo(res.GetErrorNo()),
+		ErrorMessage: res.GetErrorText(),
+		Body:         nil,
+		IsFirstTime:  true,
+	}
+}
+
+func (t *tachibanaApi) fromCommonStreamResponse(res *tachibana.CommonStreamResponse) *pb.StreamResponse {
+	return &pb.StreamResponse{
+		EventType:                     t.fromEventType(res.EventType),
+		StreamNumber:                  res.StreamNumber,
+		StreamDateTime:                timestamppb.New(res.StreamDateTime),
+		ErrorNo:                       t.fromErrorNo(res.ErrorNo),
+		ErrorMessage:                  res.ErrorText,
+		Body:                          res.Body,
+		IsFirstTime:                   true,
+		ContractStreamResponse:        nil,
+		NewsStreamResponse:            nil,
+		SystemStatusStreamResponse:    nil,
+		OperationStatusStreamResponse: nil,
+	}
+}
+
+func (t *tachibanaApi) fromContractStreamResponse(res *tachibana.ContractStreamResponse) *pb.StreamResponse {
+	return &pb.StreamResponse{
+		EventType:      t.fromEventType(res.EventType),
+		StreamNumber:   res.StreamNumber,
+		StreamDateTime: timestamppb.New(res.StreamDateTime),
+		ErrorNo:        t.fromErrorNo(res.ErrorNo),
+		ErrorMessage:   res.ErrorText,
+		Body:           res.Body,
+		IsFirstTime:    res.FirstTime,
+		ContractStreamResponse: &pb.ContractStreamResponse{
+			Provider:                 res.Provider,
+			EventNo:                  res.EventNo,
+			StreamOrderType:          t.fromStreamOrderType(res.StreamOrderType),
+			OrderNumber:              res.OrderNumber,
+			ExecutionDate:            timestamppb.New(res.ExecutionDate),
+			ParentOrderNumber:        res.ParentOrderNumber,
+			ParentOrder:              res.ParentOrder,
+			ProductType:              t.fromProductType(res.ProductType),
+			IssueCode:                res.IssueCode,
+			Exchange:                 t.fromExchange(res.Exchange),
+			Side:                     t.fromSide(res.Side),
+			TradeType:                t.fromTradeType(res.TradeType),
+			ExecutionTiming:          t.fromExecutionTiming(res.ExecutionTiming),
+			ExecutionType:            t.fromExecutionType(res.ExecutionType),
+			Price:                    res.Price,
+			Quantity:                 res.Quantity,
+			CancelQuantity:           res.CancelQuantity,
+			ExpireQuantity:           res.ExpireQuantity,
+			ContractQuantity:         res.ContractQuantity,
+			StreamOrderStatus:        t.fromStreamOrderStatus(res.StreamOrderStatus),
+			CarryOverType:            t.fromCarryOverType(res.CarryOverType),
+			CancelOrderStatus:        t.fromCancelOrderStatus(res.CancelOrderStatus),
+			ContractStatus:           t.fromContractStatus(res.ContractStatus),
+			ExpireDate:               timestamppb.New(res.ExpireDate),
+			SecurityExpireReason:     res.SecurityExpireReason,
+			SecurityContractPrice:    res.SecurityContractPrice,
+			SecurityContractQuantity: res.SecurityContractQuantity,
+			SecurityError:            res.SecurityError,
+			NotifyDatetime:           timestamppb.New(res.NotifyDateTime),
+			IssueName:                res.IssueName,
+			CorrectExecutionTiming:   t.fromExecutionTiming(res.CorrectExecutionTiming),
+			CorrectContractQuantity:  res.CorrectContractQuantity,
+			CorrectExecutionType:     t.fromExecutionType(res.CorrectExecutionType),
+			CorrectPrice:             res.CorrectPrice,
+			CorrectQuantity:          res.CorrectQuantity,
+			CorrectExpireDate:        timestamppb.New(res.CorrectExpireDate),
+			CorrectStopOrderType:     t.fromStopOrderType(res.CorrectStopOrderType),
+			CorrectTriggerPrice:      res.CorrectTriggerPrice,
+			CorrectStopOrderPrice:    res.CorrectStopOrderPrice,
+		},
+	}
+}
+
+func (t *tachibanaApi) fromNewsStreamResponse(res *tachibana.NewsStreamResponse) *pb.StreamResponse {
+	return &pb.StreamResponse{
+		EventType:      t.fromEventType(res.EventType),
+		StreamNumber:   res.StreamNumber,
+		StreamDateTime: timestamppb.New(res.StreamDateTime),
+		ErrorNo:        t.fromErrorNo(res.ErrorNo),
+		ErrorMessage:   res.ErrorText,
+		Body:           res.Body,
+		IsFirstTime:    res.FirstTime,
+		NewsStreamResponse: &pb.NewsStreamResponse{
+			Provider:      res.Provider,
+			EventNo:       res.EventNo,
+			NewsId:        res.NewsId,
+			NewsDatetime:  timestamppb.New(res.NewsDateTime),
+			NumOfCategory: int64(res.NumOfCategory),
+			Categories:    res.Categories,
+			NumOfGenre:    int64(res.NumOfGenre),
+			Genres:        res.Genres,
+			NumOfIssue:    int64(res.NumOfIssue),
+			Issues:        res.Issues,
+			Title:         res.Title,
+		},
+	}
+}
+
+func (t *tachibanaApi) fromSystemStatusStreamResponse(res *tachibana.SystemStatusStreamResponse) *pb.StreamResponse {
+	return &pb.StreamResponse{
+		EventType:      t.fromEventType(res.EventType),
+		StreamNumber:   res.StreamNumber,
+		StreamDateTime: timestamppb.New(res.StreamDateTime),
+		ErrorNo:        t.fromErrorNo(res.ErrorNo),
+		ErrorMessage:   res.ErrorText,
+		Body:           res.Body,
+		IsFirstTime:    res.FirstTime,
+		SystemStatusStreamResponse: &pb.SystemStatusStreamResponse{
+			Provider:       res.Provider,
+			EventNo:        res.EventNo,
+			UpdateDatetime: timestamppb.New(res.UpdateDateTime),
+			ApprovalLogin:  t.fromApprovalLogin(res.ApprovalLogin),
+			SystemStatus:   t.fromSystemStatus(res.SystemStatus),
+		},
+	}
+}
+
+func (t *tachibanaApi) fromOperationStatusStreamResponse(res *tachibana.OperationStatusStreamResponse) *pb.StreamResponse {
+	return &pb.StreamResponse{
+		EventType:      t.fromEventType(res.EventType),
+		StreamNumber:   res.StreamNumber,
+		StreamDateTime: timestamppb.New(res.StreamDateTime),
+		ErrorNo:        t.fromErrorNo(res.ErrorNo),
+		ErrorMessage:   res.ErrorText,
+		Body:           res.Body,
+		IsFirstTime:    res.FirstTime,
+		OperationStatusStreamResponse: &pb.OperationStatusStreamResponse{
+			Provider:          res.Provider,
+			EventNo:           res.EventNo,
+			UpdateDatetime:    timestamppb.New(res.UpdateDateTime),
+			Exchange:          t.fromExchange(res.Exchange),
+			AssetCode:         res.AssetCode,
+			ProductType:       res.ProductType,
+			OperationCategory: res.OperationCategory,
+			OperationUnit:     res.OperationUnit,
+			BusinessDayType:   res.BusinessDayType,
+			OperationStatus:   res.OperationStatus,
+		},
+	}
+}
+
 func (t *tachibanaApi) fromErrorNo(errorNo tachibana.ErrorNo) pb.ErrorNo {
 	switch errorNo {
 	case tachibana.ErrorNoProblem:
@@ -1617,4 +1800,162 @@ func (t *tachibanaApi) fromDayKey(dayKey tachibana.DayKey) pb.DayKey {
 		return pb.DayKey_DAY_KEY_NEXT_DAY
 	}
 	return pb.DayKey_DAY_KEY_UNSPECIFIED
+}
+
+func (t *tachibanaApi) toEventType(eventType pb.EventType) tachibana.EventType {
+	switch eventType {
+	case pb.EventType_EVENT_TYPE_ERROR_STATUS:
+		return tachibana.EventTypeErrorStatus
+	case pb.EventType_EVENT_TYPE_MARKET_PRICE:
+		return tachibana.EventTypeMarketPrice
+	case pb.EventType_EVENT_TYPE_CONTRACT:
+		return tachibana.EventTypeContract
+	case pb.EventType_EVENT_TYPE_NEWS:
+		return tachibana.EventTypeNews
+	case pb.EventType_EVENT_TYPE_SYSTEM_STATUS:
+		return tachibana.EventTypeSystemStatus
+	case pb.EventType_EVENT_TYPE_OPERATION_STATUS:
+		return tachibana.EventTypeOperationStatus
+	}
+	return tachibana.EventTypeUnspecified
+}
+
+func (t *tachibanaApi) fromEventType(eventType tachibana.EventType) pb.EventType {
+	switch eventType {
+	case tachibana.EventTypeErrorStatus:
+		return pb.EventType_EVENT_TYPE_ERROR_STATUS
+	case tachibana.EventTypeMarketPrice:
+		return pb.EventType_EVENT_TYPE_MARKET_PRICE
+	case tachibana.EventTypeContract:
+		return pb.EventType_EVENT_TYPE_CONTRACT
+	case tachibana.EventTypeNews:
+		return pb.EventType_EVENT_TYPE_NEWS
+	case tachibana.EventTypeSystemStatus:
+		return pb.EventType_EVENT_TYPE_SYSTEM_STATUS
+	case tachibana.EventTypeOperationStatus:
+		return pb.EventType_EVENT_TYPE_OPERATION_STATUS
+	}
+	return pb.EventType_EVENT_TYPE_UNSPECIFIED
+}
+
+func (t *tachibanaApi) fromStreamOrderType(streamOrderType tachibana.StreamOrderType) pb.StreamOrderType {
+	switch streamOrderType {
+	case tachibana.StreamOrderTypeReceiveOrder:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVE_ORDER
+	case tachibana.StreamOrderTypeReceiveCorrect:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVE_CORRECT
+	case tachibana.StreamOrderTypeReceiveCancel:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVE_CANCEL
+	case tachibana.StreamOrderTypeReceiveError:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVE_ERROR
+	case tachibana.StreamOrderTypeReceiveCorrectError:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVE_CORRECT_ERROR
+	case tachibana.StreamOrderTypeReceiveCancelError:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVE_CANCEL_ERROR
+	case tachibana.StreamOrderTypeOrderError:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_ORDER_ERROR
+	case tachibana.StreamOrderTypeCorrectError:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CORRECT_ERROR
+	case tachibana.StreamOrderTypeCancelError:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CANCEL_ERROR
+	case tachibana.StreamOrderTypeCorrected:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CORRECTED
+	case tachibana.StreamOrderTypeCanceled:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CANCELED
+	case tachibana.StreamOrderTypeContract:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CONTRACT
+	case tachibana.StreamOrderTypeExpire:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_EXPIRE
+	case tachibana.StreamOrderTypeExpireContinue:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_EXPIRE_CONTINUE
+	case tachibana.StreamOrderTypeCancelContract:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CANCEL_CONTRACT
+	case tachibana.StreamOrderTypeCarryOver:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_CARRYOVER
+	case tachibana.StreamOrderTypeReceived:
+		return pb.StreamOrderType_STREAM_ORDER_TYPE_RECEIVED
+	}
+	return pb.StreamOrderType_STREAM_ORDER_TYPE_UNSPECIFIED
+}
+
+func (t *tachibanaApi) fromProductType(productType tachibana.ProductType) pb.ProductType {
+	switch productType {
+	case tachibana.ProductTypeStock:
+		return pb.ProductType_PRODUCT_TYPE_STOCK
+	case tachibana.ProductTypeFuture:
+		return pb.ProductType_PRODUCT_TYPE_FUTURE
+	case tachibana.ProductTypeOption:
+		return pb.ProductType_PRODUCT_TYPE_OPTION
+	}
+	return pb.ProductType_PRODUCT_TYPE_UNSPECIFIED
+}
+
+func (t *tachibanaApi) fromStreamOrderStatus(streamOrderStatus tachibana.StreamOrderStatus) pb.StreamOrderStatus {
+	switch streamOrderStatus {
+	case tachibana.StreamOrderStatusNew:
+		return pb.StreamOrderStatus_STREAM_ORDER_STATUS_NEW
+	case tachibana.StreamOrderStatusReceived:
+		return pb.StreamOrderStatus_STREAM_ORDER_STATUS_RECEIVED
+	case tachibana.StreamOrderStatusError:
+		return pb.StreamOrderStatus_STREAM_ORDER_STATUS_ERROR
+	case tachibana.StreamOrderStatusPartExpired:
+		return pb.StreamOrderStatus_STREAM_ORDER_STATUS_PART_EXPIRED
+	case tachibana.StreamOrderStatusExpired:
+		return pb.StreamOrderStatus_STREAM_ORDER_STATUS_EXPIRED
+	case tachibana.StreamOrderStatusCarryOverExpired:
+		return pb.StreamOrderStatus_STREAM_ORDER_STATUS_CARRY_OVER_EXPIRED
+	}
+	return pb.StreamOrderStatus_STREAM_ORDER_STATUS_UNSPECIFIED
+}
+
+func (t *tachibanaApi) fromCancelOrderStatus(cancelOrderStatus tachibana.CancelOrderStatus) pb.CancelOrderStatus {
+	switch cancelOrderStatus {
+	case tachibana.CancelOrderStatusNoCorrect:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_NO_CORRECT
+	case tachibana.CancelOrderStatusInCorrect:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_INCORRECT
+	case tachibana.CancelOrderStatusInCancel:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_IN_CANCEL
+	case tachibana.CancelOrderStatusCorrected:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_CORRECTED
+	case tachibana.CancelOrderStatusCanceled:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_CANCELED
+	case tachibana.CancelOrderStatusCorrectFailed:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_CORRECT_FAILED
+	case tachibana.CancelOrderStatusCancelFailed:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_CANCEL_FAILED
+	case tachibana.CancelOrderStatusSwitch:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_SWITCH
+	case tachibana.CancelOrderStatusSwitched:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_SWITCHED
+	case tachibana.CancelOrderStatusSwitchFailed:
+		return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_SWITCH_FAILED
+	}
+	return pb.CancelOrderStatus_CANCEL_ORDER_STATUS_UNSPECIFIED
+}
+
+func (t *tachibanaApi) fromApprovalLogin(approvalLogin tachibana.ApprovalLogin) pb.ApprovalLogin {
+	switch approvalLogin {
+	case tachibana.ApprovalLoginUnApproval:
+		return pb.ApprovalLogin_APPROVAL_LOGIN_UN_APPROVAL
+	case tachibana.ApprovalLoginApproval:
+		return pb.ApprovalLogin_APPROVAL_LOGIN_APPROVAL
+	case tachibana.ApprovalLoginOutOfService:
+		return pb.ApprovalLogin_APPROVAL_LOGIN_OUT_OF_SERVICE
+	case tachibana.ApprovalLoginTesting:
+		return pb.ApprovalLogin_APPROVAL_LOGIN_TESTING
+	}
+	return pb.ApprovalLogin_APPROVAL_LOGIN_UNSPECIFIED
+}
+
+func (t *tachibanaApi) fromSystemStatus(systemStatus tachibana.SystemStatus) pb.SystemStatus {
+	switch systemStatus {
+	case tachibana.SystemStatusClosing:
+		return pb.SystemStatus_SYSTEM_STATUS_CLOSING
+	case tachibana.SystemStatusOpening:
+		return pb.SystemStatus_SYSTEM_STATUS_OPENING
+	case tachibana.SystemStatusPause:
+		return pb.SystemStatus_SYSTEM_STATUS_PAUSE
+	}
+	return pb.SystemStatus_SYSTEM_STATUS_UNSPECIFIED
 }

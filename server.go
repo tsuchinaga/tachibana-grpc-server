@@ -11,16 +11,21 @@ import (
 )
 
 func NewServer() Server {
+	tachibanaApi := &tachibanaApi{
+		client:         tachibana.NewClient(tachibana.EnvironmentProduction, tachibana.ApiVersionLatest),
+		requestTimeout: 3 * time.Second,
+	}
 	return &server{
-		tachibana: &tachibanaApi{
-			client:         tachibana.NewClient(tachibana.EnvironmentProduction, tachibana.ApiVersionLatest),
-			requestTimeout: 3 * time.Second,
-		},
-		clock:  &clock{},
-		logger: &logger{},
+		tachibana: tachibanaApi,
+		clock:     &clock{},
+		logger:    &logger{},
 		sessionStore: &sessionStore{
 			sessions:     map[string]*accountSession{},
 			clientTokens: map[string]string{},
+		},
+		streamService: &streamService{
+			tachibanaApi:   tachibanaApi,
+			sessionStreams: map[string]*sessionStream{},
 		},
 	}
 }
@@ -33,10 +38,11 @@ type Server interface {
 
 type server struct {
 	pb.UnimplementedTachibanaServiceServer
-	tachibana    iTachibanaApi
-	clock        iClock
-	logger       iLogger
-	sessionStore iSessionStore
+	tachibana     iTachibanaApi
+	clock         iClock
+	logger        iLogger
+	sessionStore  iSessionStore
+	streamService iStreamService
 }
 
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
@@ -144,6 +150,19 @@ func (s *server) TickGroup(ctx context.Context, req *pb.TickGroupRequest) (*pb.T
 		return nil, err
 	}
 	return s.tachibana.tickGroup(ctx, session.Session, req)
+}
+
+func (s *server) Stream(req *pb.StreamRequest, stream pb.TachibanaService_StreamServer) error {
+	ctx := stream.Context()
+	session, err := s.getSession(ctx)
+	if err != nil {
+		return err
+	}
+
+	// ここまで来た時点でclientTokenは必ずとれる
+	clientToken, _ := s.getClientToken(ctx)
+
+	return s.streamService.connect(ctx, session, clientToken, req, stream)
 }
 
 func (s *server) withErrorDetail(err error) error {

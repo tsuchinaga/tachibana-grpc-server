@@ -19,6 +19,7 @@ type iTachibanaApi interface {
 	marketPrice(ctx context.Context, session *tachibana.Session, req *pb.MarketPriceRequest) (*pb.MarketPriceResponse, error)
 	businessDay(ctx context.Context, session *tachibana.Session, req *pb.BusinessDayRequest) (*pb.BusinessDayResponse, error)
 	tickGroup(ctx context.Context, session *tachibana.Session, req *pb.TickGroupRequest) (*pb.TickGroupResponse, error)
+	stream(ctx context.Context, session *tachibana.Session, req *pb.StreamRequest) (<-chan *pb.StreamResponse, <-chan error)
 }
 
 type tachibanaApi struct {
@@ -128,4 +129,18 @@ func (t *tachibanaApi) tickGroup(ctx context.Context, session *tachibana.Session
 		return nil, err
 	}
 	return t.fromTickGroupResponse(res), nil
+}
+
+func (t *tachibanaApi) stream(ctx context.Context, session *tachibana.Session, req *pb.StreamRequest) (<-chan *pb.StreamResponse, <-chan error) {
+	resCh := make(chan *pb.StreamResponse)
+	tResCh, tErrCh := t.client.Stream(ctx, session, *t.toStreamRequest(req))
+	go func() {
+		defer close(resCh)
+		res, ok := <-tResCh
+		if !ok {
+			return
+		}
+		resCh <- t.fromStreamResponse(res)
+	}()
+	return resCh, tErrCh
 }
