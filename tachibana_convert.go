@@ -611,7 +611,7 @@ func (t *tachibanaApi) toStreamRequest(req *pb.StreamRequest) *tachibana.StreamR
 	r := &tachibana.StreamRequest{
 		ColumnNumber:      []int{},
 		IssueCodes:        []string{},
-		MarketCodes:       []string{},
+		MarketCodes:       []tachibana.Exchange{},
 		StartStreamNumber: 0,
 		StreamEventTypes:  []tachibana.EventType{},
 	}
@@ -625,7 +625,7 @@ func (t *tachibanaApi) toStreamRequest(req *pb.StreamRequest) *tachibana.StreamR
 	for i, issue := range req.StreamIssues {
 		r.ColumnNumber = append(r.ColumnNumber, i+1)
 		r.IssueCodes = append(r.IssueCodes, issue.IssueCode)
-		r.MarketCodes = append(r.MarketCodes, string(t.toExchange(issue.Exchange)))
+		r.MarketCodes = append(r.MarketCodes, t.toExchange(issue.Exchange))
 	}
 
 	return r
@@ -743,6 +743,7 @@ func (t *tachibanaApi) fromNewsStreamResponse(res *tachibana.NewsStreamResponse)
 			NumOfIssue:    int64(res.NumOfIssue),
 			Issues:        res.Issues,
 			Title:         res.Title,
+			Content:       res.Content,
 		},
 	}
 }

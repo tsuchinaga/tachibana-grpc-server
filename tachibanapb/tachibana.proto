@@ -555,6 +555,7 @@ message NewsStreamResponse {
   int64 num_of_issue = 10; // 関連銘柄コードリスト
   repeated string issues = 11; // 関連銘柄コードリスト
   string title = 12; // ニュースタイトル
+  string content = 13; // ニュース本文
 }
 
 message SystemStatusStreamResponse {
