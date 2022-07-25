@@ -74,7 +74,7 @@ func (s *sessionStream) addClient(ctx context.Context, clientToken string, req *
 
 func (s *sessionStream) getRequest() *pb.StreamRequest {
 	req := &pb.StreamRequest{
-		EventTypes:   []pb.EventType{},
+		EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_KEEPALIVE},
 		StreamIssues: []*pb.StreamIssue{},
 	}
 

@@ -1063,7 +1063,7 @@ enum DayKey {
 enum EventType {
   EVENT_TYPE_UNSPECIFIED = 0; // 未指定
   EVENT_TYPE_ERROR_STATUS = 1; // エラーステータス情報配信指定
-//  EVENT_TYPE_KEEPALIVE = 2; // キープアライブ情報配信指定
+  EVENT_TYPE_KEEPALIVE = 2; // キープアライブ情報配信指定
   EVENT_TYPE_MARKET_PRICE = 3; // 時価情報配信指定
   EVENT_TYPE_CONTRACT = 4; // 注文約定通知イベント配信指定
   EVENT_TYPE_NEWS = 5; // ニュース通知イベント配信指定

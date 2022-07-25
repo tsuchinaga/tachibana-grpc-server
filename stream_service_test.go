@@ -130,7 +130,7 @@ func Test_sessionStream_getRequest(t *testing.T) {
 	}{
 		{name: "クライアントのリクエストが空っぽなら空っぽのリクエストが出される",
 			sessionStream: &sessionStream{},
-			want1:         &pb.StreamRequest{EventTypes: []pb.EventType{}, StreamIssues: []*pb.StreamIssue{}}},
+			want1:         &pb.StreamRequest{EventTypes: []pb.EventType{pb.EventType_EVENT_TYPE_KEEPALIVE}, StreamIssues: []*pb.StreamIssue{}}},
 		{name: "クライアントのリクエストが単一のリクエストなら、同じリクエストが返される",
 			sessionStream: &sessionStream{
 				streams: map[string]iClientStream{"client-token": &clientStream{
@@ -141,7 +141,7 @@ func Test_sessionStream_getRequest(t *testing.T) {
 				}},
 			},
 			want1: &pb.StreamRequest{
-				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_ERROR_STATUS, pb.EventType_EVENT_TYPE_CONTRACT},
+				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_ERROR_STATUS, pb.EventType_EVENT_TYPE_KEEPALIVE, pb.EventType_EVENT_TYPE_CONTRACT},
 				StreamIssues: []*pb.StreamIssue{{IssueCode: "1475", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1476", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}},
 			}},
 		{name: "クライアントのリクエストが複数あるなら、結合したリクエストを作る",
@@ -161,7 +161,7 @@ func Test_sessionStream_getRequest(t *testing.T) {
 					}},
 			},
 			want1: &pb.StreamRequest{
-				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_ERROR_STATUS, pb.EventType_EVENT_TYPE_MARKET_PRICE, pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_SYSTEM_STATUS},
+				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_ERROR_STATUS, pb.EventType_EVENT_TYPE_KEEPALIVE, pb.EventType_EVENT_TYPE_MARKET_PRICE, pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_SYSTEM_STATUS},
 				StreamIssues: []*pb.StreamIssue{{IssueCode: "1475", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1476", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1477", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}},
 			}},
 	}
