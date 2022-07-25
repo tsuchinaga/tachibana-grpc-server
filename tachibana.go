@@ -136,11 +136,13 @@ func (t *tachibanaApi) stream(ctx context.Context, session *tachibana.Session, r
 	tResCh, tErrCh := t.client.Stream(ctx, session, *t.toStreamRequest(req))
 	go func() {
 		defer close(resCh)
-		res, ok := <-tResCh
-		if !ok {
-			return
+		for {
+			res, ok := <-tResCh
+			if !ok {
+				return
+			}
+			resCh <- t.fromStreamResponse(res)
 		}
-		resCh <- t.fromStreamResponse(res)
 	}()
 	return resCh, tErrCh
 }
