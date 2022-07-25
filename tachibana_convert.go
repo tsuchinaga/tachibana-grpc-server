@@ -1807,6 +1807,8 @@ func (t *tachibanaApi) toEventType(eventType pb.EventType) tachibana.EventType {
 	switch eventType {
 	case pb.EventType_EVENT_TYPE_ERROR_STATUS:
 		return tachibana.EventTypeErrorStatus
+	case pb.EventType_EVENT_TYPE_KEEPALIVE:
+		return tachibana.EventTypeKeepAlive
 	case pb.EventType_EVENT_TYPE_MARKET_PRICE:
 		return tachibana.EventTypeMarketPrice
 	case pb.EventType_EVENT_TYPE_CONTRACT:
