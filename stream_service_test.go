@@ -70,16 +70,18 @@ func Test_sessionStream_addClient(t *testing.T) {
 			arg4:            &testStreamServer{},
 			arg5:            errCh,
 			want1: &pb.StreamRequest{
-				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_ERROR_STATUS},
+				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_ERROR_STATUS, pb.EventType_EVENT_TYPE_KEEPALIVE, pb.EventType_EVENT_TYPE_CONTRACT},
 				StreamIssues: []*pb.StreamIssue{},
 			},
 			wantOldClientStream: &testClientStream{disconnectCount: 1, disconnectHistory: []interface{}{newStreamRequestErr}},
 			wantStreams: map[string]iClientStream{"client-token": &clientStream{
 				clientToken: "client-token",
-				request:     &pb.StreamRequest{EventTypes: []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_ERROR_STATUS}},
+				request: &pb.StreamRequest{
+					EventTypes: []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_ERROR_STATUS}},
 				stream:      &testStreamServer{},
 				ctx:         ctx,
 				errCh:       errCh,
+				isConnected: true,
 			}}},
 		{name: "クライアント接続がなければ切断は叩かない",
 			arg1: ctx,
@@ -88,8 +90,9 @@ func Test_sessionStream_addClient(t *testing.T) {
 			arg4: &testStreamServer{},
 			arg5: errCh,
 			want1: &pb.StreamRequest{
-				EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_ERROR_STATUS},
-				StreamIssues: []*pb.StreamIssue{},
+				EventTypes:    []pb.EventType{pb.EventType_EVENT_TYPE_ERROR_STATUS, pb.EventType_EVENT_TYPE_KEEPALIVE, pb.EventType_EVENT_TYPE_CONTRACT},
+				ReceiveResend: false,
+				StreamIssues:  []*pb.StreamIssue{},
 			},
 			wantOldClientStream: nil,
 			wantStreams: map[string]iClientStream{"client-token": &clientStream{
@@ -98,6 +101,7 @@ func Test_sessionStream_addClient(t *testing.T) {
 				stream:      &testStreamServer{},
 				ctx:         ctx,
 				errCh:       errCh,
+				isConnected: true,
 			}}},
 	}
 
@@ -113,7 +117,10 @@ func Test_sessionStream_addClient(t *testing.T) {
 			if !reflect.DeepEqual(test.want1, got1) ||
 				!reflect.DeepEqual(test.wantOldClientStream, test.oldClientStream) ||
 				!reflect.DeepEqual(test.wantStreams, sessionStream.streams) {
-				t.Errorf("%s error\nwant: %+v, %+v, %+v\ngot: %+v, %+v, %+v\n", t.Name(),
+				t.Errorf("%s error\nresult: %+v, %+v, %+v\nwant: %+v, %+v, %+v\ngot: %+v, %+v, %+v\n", t.Name(),
+					!reflect.DeepEqual(test.want1, got1),
+					!reflect.DeepEqual(test.wantOldClientStream, test.oldClientStream),
+					!reflect.DeepEqual(test.wantStreams, sessionStream.streams),
 					test.want1, test.wantOldClientStream, test.wantStreams,
 					got1, test.oldClientStream, sessionStream.streams)
 			}
@@ -334,18 +341,22 @@ func Test_clientStream_send(t *testing.T) {
 		{name: "リクエストとレスポンスが送信可能な関係なら送信する",
 			clientStream: &clientStream{
 				isConnected: true,
-				request:     &pb.StreamRequest{EventTypes: []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_MARKET_PRICE}},
-				stream:      &testStreamServer{}},
-			arg1:         &pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true},
-			wantStream:   &testStreamServer{sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true}}},
+				request: &pb.StreamRequest{
+					EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_MARKET_PRICE},
+					StreamIssues: []*pb.StreamIssue{{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}},
+				stream: &testStreamServer{}},
+			arg1:         &pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}},
+			wantStream:   &testStreamServer{sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}}},
 			wantErrCount: 0},
 		{name: "リクエストとレスポンスが送信可能でもエラーになったら切断する",
 			clientStream: &clientStream{
 				isConnected: true,
-				request:     &pb.StreamRequest{EventTypes: []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_MARKET_PRICE}},
-				stream:      &testStreamServer{send1: unknownErr}},
-			arg1:         &pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true},
-			wantStream:   &testStreamServer{send1: unknownErr, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true}}},
+				request: &pb.StreamRequest{
+					EventTypes:   []pb.EventType{pb.EventType_EVENT_TYPE_CONTRACT, pb.EventType_EVENT_TYPE_MARKET_PRICE},
+					StreamIssues: []*pb.StreamIssue{{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}},
+				stream: &testStreamServer{send1: unknownErr}},
+			arg1:         &pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}},
+			wantStream:   &testStreamServer{send1: unknownErr, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, IsFirstTime: true, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}}},
 			wantErrCount: 1},
 	}
 

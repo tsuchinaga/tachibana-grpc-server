@@ -20,7 +20,7 @@ func (x *StreamRequest) Sendable(res *StreamResponse) bool {
 
 	// 市場価格情報なら参照している銘柄かのチェック
 	if res.EventType == EventType_EVENT_TYPE_MARKET_PRICE {
-		return x.hasIssue(res.MarketPriceStreamResponse.IssueCode, res.MarketPriceStreamResponse.Exchange)
+		return res.MarketPriceStreamResponse != nil && x.hasIssue(res.MarketPriceStreamResponse.IssueCode, res.MarketPriceStreamResponse.Exchange)
 	}
 
 	return true
