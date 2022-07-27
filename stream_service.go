@@ -134,7 +134,7 @@ func (s *sessionStream) send(res *pb.StreamResponse) {
 
 	// MarketPriceなら銘柄情報と市場情報を追加する
 	if res.EventType == pb.EventType_EVENT_TYPE_MARKET_PRICE {
-		issue := s.request.StreamIssues[res.MarketPriceStreamResponse.ColumnNumber]
+		issue := s.request.StreamIssues[res.MarketPriceStreamResponse.ColumnNumber-1]
 		res.MarketPriceStreamResponse.IssueCode = issue.IssueCode
 		res.MarketPriceStreamResponse.Exchange = issue.Exchange
 	}
