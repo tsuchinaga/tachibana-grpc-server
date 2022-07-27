@@ -61,6 +61,8 @@ gitlab.com/tsuchinaga/go-tachibanaapi v0.0.7 h1:gvvkI5wP66F7q38xrdh7U6OLz/Ln5gz1
 gitlab.com/tsuchinaga/go-tachibanaapi v0.0.7/go.mod h1:P8ECmEzCBT5PDiWDl+Tc9JLqccCahOt++dZLAqJ1UxY=
 gitlab.com/tsuchinaga/go-tachibanaapi v0.0.8 h1:yG1j0VX91vDEJaoLmq3bEc+BCsrdjHqmR+Vzxh4gK7M=
 gitlab.com/tsuchinaga/go-tachibanaapi v0.0.8/go.mod h1:P8ECmEzCBT5PDiWDl+Tc9JLqccCahOt++dZLAqJ1UxY=
+gitlab.com/tsuchinaga/go-tachibanaapi v0.0.9 h1:3joy4YU4fojmMoY+LhB3gAINl38hsVEYDAW4C6cfrF8=
+gitlab.com/tsuchinaga/go-tachibanaapi v0.0.9/go.mod h1:P8ECmEzCBT5PDiWDl+Tc9JLqccCahOt++dZLAqJ1UxY=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=

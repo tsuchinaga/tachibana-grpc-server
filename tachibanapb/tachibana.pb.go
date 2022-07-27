@@ -7242,14 +7242,14 @@ type StreamResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EventType      EventType              `protobuf:"varint,1,opt,name=event_type,json=eventType,proto3,enum=tachibanapb.EventType" json:"event_type,omitempty"` // 通知種別
-	StreamNumber   int64                  `protobuf:"varint,2,opt,name=stream_number,json=streamNumber,proto3" json:"stream_number,omitempty"`                   // int64
-	StreamDateTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=stream_date_time,json=streamDateTime,proto3" json:"stream_date_time,omitempty"`            // 通知日時
-	ErrorNo        ErrorNo                `protobuf:"varint,4,opt,name=error_no,json=errorNo,proto3,enum=tachibanapb.ErrorNo" json:"error_no,omitempty"`         // エラー番号
-	ErrorMessage   string                 `protobuf:"bytes,5,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`                    // エラー文言
-	Body           []byte                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`                                                        // レスポンス本文
-	IsFirstTime    bool                   `protobuf:"varint,7,opt,name=is_first_time,json=isFirstTime,proto3" json:"is_first_time,omitempty"`                    // 初回配信
-	// 8は時価情報配信に残しておく
+	EventType                     EventType                      `protobuf:"varint,1,opt,name=event_type,json=eventType,proto3,enum=tachibanapb.EventType" json:"event_type,omitempty"`                                      // 通知種別
+	StreamNumber                  int64                          `protobuf:"varint,2,opt,name=stream_number,json=streamNumber,proto3" json:"stream_number,omitempty"`                                                        // int64
+	StreamDateTime                *timestamppb.Timestamp         `protobuf:"bytes,3,opt,name=stream_date_time,json=streamDateTime,proto3" json:"stream_date_time,omitempty"`                                                 // 通知日時
+	ErrorNo                       ErrorNo                        `protobuf:"varint,4,opt,name=error_no,json=errorNo,proto3,enum=tachibanapb.ErrorNo" json:"error_no,omitempty"`                                              // エラー番号
+	ErrorMessage                  string                         `protobuf:"bytes,5,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`                                                         // エラー文言
+	Body                          []byte                         `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`                                                                                             // レスポンス本文
+	IsFirstTime                   bool                           `protobuf:"varint,7,opt,name=is_first_time,json=isFirstTime,proto3" json:"is_first_time,omitempty"`                                                         // 初回配信
+	MarketPriceStreamResponse     *MarketPriceStreamResponse     `protobuf:"bytes,8,opt,name=market_price_stream_response,json=marketPriceStreamResponse,proto3" json:"market_price_stream_response,omitempty"`              // 時価情報通知イベント
 	ContractStreamResponse        *ContractStreamResponse        `protobuf:"bytes,9,opt,name=contract_stream_response,json=contractStreamResponse,proto3" json:"contract_stream_response,omitempty"`                         // 注文約定通知イベント
 	NewsStreamResponse            *NewsStreamResponse            `protobuf:"bytes,10,opt,name=news_stream_response,json=newsStreamResponse,proto3" json:"news_stream_response,omitempty"`                                    // ニュース通知イベント
 	SystemStatusStreamResponse    *SystemStatusStreamResponse    `protobuf:"bytes,11,opt,name=system_status_stream_response,json=systemStatusStreamResponse,proto3" json:"system_status_stream_response,omitempty"`          // システムステータス
@@ -7337,6 +7337,13 @@ func (x *StreamResponse) GetIsFirstTime() bool {
 	return false
 }
 
+func (x *StreamResponse) GetMarketPriceStreamResponse() *MarketPriceStreamResponse {
+	if x != nil {
+		return x.MarketPriceStreamResponse
+	}
+	return nil
+}
+
 func (x *StreamResponse) GetContractStreamResponse() *ContractStreamResponse {
 	if x != nil {
 		return x.ContractStreamResponse
@@ -7363,6 +7370,629 @@ func (x *StreamResponse) GetOperationStatusStreamResponse() *OperationStatusStre
 		return x.OperationStatusStreamResponse
 	}
 	return nil
+}
+
+type MarketPriceStreamResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ColumnNumber      int64                  `protobuf:"varint,1,opt,name=column_number,json=columnNumber,proto3" json:"column_number,omitempty"`                                             // 行番号
+	IssueCode         string                 `protobuf:"bytes,2,opt,name=issue_code,json=issueCode,proto3" json:"issue_code,omitempty"`                                                       // 銘柄コード
+	Exchange          Exchange               `protobuf:"varint,3,opt,name=exchange,proto3,enum=tachibanapb.Exchange" json:"exchange,omitempty"`                                               // 市場
+	Section           string                 `protobuf:"bytes,4,opt,name=section,proto3" json:"section,omitempty"`                                                                            // 所属
+	CurrentPrice      float64                `protobuf:"fixed64,5,opt,name=current_price,json=currentPrice,proto3" json:"current_price,omitempty"`                                            // 現在値
+	CurrentPriceTime  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=current_price_time,json=currentPriceTime,proto3" json:"current_price_time,omitempty"`                                // 現在値時刻
+	ChangePriceType   ChangePriceType        `protobuf:"varint,7,opt,name=change_price_type,json=changePriceType,proto3,enum=tachibanapb.ChangePriceType" json:"change_price_type,omitempty"` // 現値前値比較
+	PrevDayRatio      float64                `protobuf:"fixed64,8,opt,name=prev_day_ratio,json=prevDayRatio,proto3" json:"prev_day_ratio,omitempty"`                                          // 前日比
+	PrevDayPercent    float64                `protobuf:"fixed64,9,opt,name=prev_day_percent,json=prevDayPercent,proto3" json:"prev_day_percent,omitempty"`                                    // 騰落率
+	OpenPrice         float64                `protobuf:"fixed64,10,opt,name=open_price,json=openPrice,proto3" json:"open_price,omitempty"`                                                    // 始値
+	OpenPriceTime     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=open_price_time,json=openPriceTime,proto3" json:"open_price_time,omitempty"`                                        // 始値時刻
+	HighPrice         float64                `protobuf:"fixed64,12,opt,name=high_price,json=highPrice,proto3" json:"high_price,omitempty"`                                                    // 高値
+	HighPriceTime     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=high_price_time,json=highPriceTime,proto3" json:"high_price_time,omitempty"`                                        // 高値時刻
+	LowPrice          float64                `protobuf:"fixed64,14,opt,name=low_price,json=lowPrice,proto3" json:"low_price,omitempty"`                                                       // 安値
+	LowPriceTime      *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=low_price_time,json=lowPriceTime,proto3" json:"low_price_time,omitempty"`                                           // 安値時刻
+	Volume            float64                `protobuf:"fixed64,16,opt,name=volume,proto3" json:"volume,omitempty"`                                                                           // 出来高
+	AskSign           IndicationPriceType    `protobuf:"varint,17,opt,name=ask_sign,json=askSign,proto3,enum=tachibanapb.IndicationPriceType" json:"ask_sign,omitempty"`                      // 売気配値種類
+	AskPrice          float64                `protobuf:"fixed64,18,opt,name=ask_price,json=askPrice,proto3" json:"ask_price,omitempty"`                                                       // 売気配値
+	AskQuantity       float64                `protobuf:"fixed64,19,opt,name=ask_quantity,json=askQuantity,proto3" json:"ask_quantity,omitempty"`                                              // 売気配数量
+	BidSign           IndicationPriceType    `protobuf:"varint,20,opt,name=bid_sign,json=bidSign,proto3,enum=tachibanapb.IndicationPriceType" json:"bid_sign,omitempty"`                      // 買気配値種類
+	BidPrice          float64                `protobuf:"fixed64,21,opt,name=bid_price,json=bidPrice,proto3" json:"bid_price,omitempty"`                                                       // 買気配値
+	BidQuantity       float64                `protobuf:"fixed64,22,opt,name=bid_quantity,json=bidQuantity,proto3" json:"bid_quantity,omitempty"`                                              // 買気配数量
+	ExRightType       string                 `protobuf:"bytes,23,opt,name=ex_right_type,json=exRightType,proto3" json:"ex_right_type,omitempty"`                                              // 配当落銘柄区分
+	DiscontinuityType string                 `protobuf:"bytes,24,opt,name=discontinuity_type,json=discontinuityType,proto3" json:"discontinuity_type,omitempty"`                              // 不連続要因銘柄区分
+	StopHigh          CurrentPriceType       `protobuf:"varint,25,opt,name=stop_high,json=stopHigh,proto3,enum=tachibanapb.CurrentPriceType" json:"stop_high,omitempty"`                      // 日通し高値フラグ
+	StopLow           CurrentPriceType       `protobuf:"varint,26,opt,name=stop_low,json=stopLow,proto3,enum=tachibanapb.CurrentPriceType" json:"stop_low,omitempty"`                         // 日通し安値フラグ
+	TradingAmount     float64                `protobuf:"fixed64,27,opt,name=trading_amount,json=tradingAmount,proto3" json:"trading_amount,omitempty"`                                        // 売買代金
+	AskQuantityMarket float64                `protobuf:"fixed64,28,opt,name=ask_quantity_market,json=askQuantityMarket,proto3" json:"ask_quantity_market,omitempty"`                          // 売数量(成行)
+	BidQuantityMarket float64                `protobuf:"fixed64,29,opt,name=bid_quantity_market,json=bidQuantityMarket,proto3" json:"bid_quantity_market,omitempty"`                          // 買数量(成行)
+	AskQuantityOver   float64                `protobuf:"fixed64,30,opt,name=ask_quantity_over,json=askQuantityOver,proto3" json:"ask_quantity_over,omitempty"`                                // 売-OVER
+	AskQuantity10     float64                `protobuf:"fixed64,31,opt,name=ask_quantity10,json=askQuantity10,proto3" json:"ask_quantity10,omitempty"`                                        // 売-10-数量
+	AskPrice10        float64                `protobuf:"fixed64,32,opt,name=ask_price10,json=askPrice10,proto3" json:"ask_price10,omitempty"`                                                 // 売-10-値段
+	AskQuantity9      float64                `protobuf:"fixed64,33,opt,name=ask_quantity9,json=askQuantity9,proto3" json:"ask_quantity9,omitempty"`                                           // 売-9-数量
+	AskPrice9         float64                `protobuf:"fixed64,34,opt,name=ask_price9,json=askPrice9,proto3" json:"ask_price9,omitempty"`                                                    // 売-9-値段
+	AskQuantity8      float64                `protobuf:"fixed64,35,opt,name=ask_quantity8,json=askQuantity8,proto3" json:"ask_quantity8,omitempty"`                                           // 売-8-数量
+	AskPrice8         float64                `protobuf:"fixed64,36,opt,name=ask_price8,json=askPrice8,proto3" json:"ask_price8,omitempty"`                                                    // 売-8-値段
+	AskQuantity7      float64                `protobuf:"fixed64,37,opt,name=ask_quantity7,json=askQuantity7,proto3" json:"ask_quantity7,omitempty"`                                           // 売-7-数量
+	AskPrice7         float64                `protobuf:"fixed64,38,opt,name=ask_price7,json=askPrice7,proto3" json:"ask_price7,omitempty"`                                                    // 売-7-値段
+	AskQuantity6      float64                `protobuf:"fixed64,39,opt,name=ask_quantity6,json=askQuantity6,proto3" json:"ask_quantity6,omitempty"`                                           // 売-6-数量
+	AskPrice6         float64                `protobuf:"fixed64,40,opt,name=ask_price6,json=askPrice6,proto3" json:"ask_price6,omitempty"`                                                    // 売-6-値段
+	AskQuantity5      float64                `protobuf:"fixed64,41,opt,name=ask_quantity5,json=askQuantity5,proto3" json:"ask_quantity5,omitempty"`                                           // 売-5-数量
+	AskPrice5         float64                `protobuf:"fixed64,42,opt,name=ask_price5,json=askPrice5,proto3" json:"ask_price5,omitempty"`                                                    // 売-5-値段
+	AskQuantity4      float64                `protobuf:"fixed64,43,opt,name=ask_quantity4,json=askQuantity4,proto3" json:"ask_quantity4,omitempty"`                                           // 売-4-数量
+	AskPrice4         float64                `protobuf:"fixed64,44,opt,name=ask_price4,json=askPrice4,proto3" json:"ask_price4,omitempty"`                                                    // 売-4-値段
+	AskQuantity3      float64                `protobuf:"fixed64,45,opt,name=ask_quantity3,json=askQuantity3,proto3" json:"ask_quantity3,omitempty"`                                           // 売-3-数量
+	AskPrice3         float64                `protobuf:"fixed64,46,opt,name=ask_price3,json=askPrice3,proto3" json:"ask_price3,omitempty"`                                                    // 売-3-値段
+	AskQuantity2      float64                `protobuf:"fixed64,47,opt,name=ask_quantity2,json=askQuantity2,proto3" json:"ask_quantity2,omitempty"`                                           // 売-2-数量
+	AskPrice2         float64                `protobuf:"fixed64,48,opt,name=ask_price2,json=askPrice2,proto3" json:"ask_price2,omitempty"`                                                    // 売-2-値段
+	AskQuantity1      float64                `protobuf:"fixed64,49,opt,name=ask_quantity1,json=askQuantity1,proto3" json:"ask_quantity1,omitempty"`                                           // 売-1-数量
+	AskPrice1         float64                `protobuf:"fixed64,50,opt,name=ask_price1,json=askPrice1,proto3" json:"ask_price1,omitempty"`                                                    // 売-1-値段
+	BidQuantity1      float64                `protobuf:"fixed64,51,opt,name=bid_quantity1,json=bidQuantity1,proto3" json:"bid_quantity1,omitempty"`                                           // 買-1-数量
+	BidPrice1         float64                `protobuf:"fixed64,52,opt,name=bid_price1,json=bidPrice1,proto3" json:"bid_price1,omitempty"`                                                    // 買-1-値段
+	BidQuantity2      float64                `protobuf:"fixed64,53,opt,name=bid_quantity2,json=bidQuantity2,proto3" json:"bid_quantity2,omitempty"`                                           // 買-2-数量
+	BidPrice2         float64                `protobuf:"fixed64,54,opt,name=bid_price2,json=bidPrice2,proto3" json:"bid_price2,omitempty"`                                                    // 買-2-値段
+	BidQuantity3      float64                `protobuf:"fixed64,55,opt,name=bid_quantity3,json=bidQuantity3,proto3" json:"bid_quantity3,omitempty"`                                           // 買-3-数量
+	BidPrice3         float64                `protobuf:"fixed64,56,opt,name=bid_price3,json=bidPrice3,proto3" json:"bid_price3,omitempty"`                                                    // 買-3-値段
+	BidQuantity4      float64                `protobuf:"fixed64,57,opt,name=bid_quantity4,json=bidQuantity4,proto3" json:"bid_quantity4,omitempty"`                                           // 買-4-数量
+	BidPrice4         float64                `protobuf:"fixed64,58,opt,name=bid_price4,json=bidPrice4,proto3" json:"bid_price4,omitempty"`                                                    // 買-4-値段
+	BidQuantity5      float64                `protobuf:"fixed64,59,opt,name=bid_quantity5,json=bidQuantity5,proto3" json:"bid_quantity5,omitempty"`                                           // 買-5-数量
+	BidPrice5         float64                `protobuf:"fixed64,60,opt,name=bid_price5,json=bidPrice5,proto3" json:"bid_price5,omitempty"`                                                    // 買-5-値段
+	BidQuantity6      float64                `protobuf:"fixed64,61,opt,name=bid_quantity6,json=bidQuantity6,proto3" json:"bid_quantity6,omitempty"`                                           // 買-6-数量
+	BidPrice6         float64                `protobuf:"fixed64,62,opt,name=bid_price6,json=bidPrice6,proto3" json:"bid_price6,omitempty"`                                                    // 買-6-値段
+	BidQuantity7      float64                `protobuf:"fixed64,63,opt,name=bid_quantity7,json=bidQuantity7,proto3" json:"bid_quantity7,omitempty"`                                           // 買-7-数量
+	BidPrice7         float64                `protobuf:"fixed64,64,opt,name=bid_price7,json=bidPrice7,proto3" json:"bid_price7,omitempty"`                                                    // 買-7-値段
+	BidQuantity8      float64                `protobuf:"fixed64,65,opt,name=bid_quantity8,json=bidQuantity8,proto3" json:"bid_quantity8,omitempty"`                                           // 買-8-数量
+	BidPrice8         float64                `protobuf:"fixed64,66,opt,name=bid_price8,json=bidPrice8,proto3" json:"bid_price8,omitempty"`                                                    // 買-8-値段
+	BidQuantity9      float64                `protobuf:"fixed64,67,opt,name=bid_quantity9,json=bidQuantity9,proto3" json:"bid_quantity9,omitempty"`                                           // 買-9-数量
+	BidPrice9         float64                `protobuf:"fixed64,68,opt,name=bid_price9,json=bidPrice9,proto3" json:"bid_price9,omitempty"`                                                    // 買-9-値段
+	BidQuantity10     float64                `protobuf:"fixed64,69,opt,name=bid_quantity10,json=bidQuantity10,proto3" json:"bid_quantity10,omitempty"`                                        // 買-10-数量
+	BidPrice10        float64                `protobuf:"fixed64,70,opt,name=bid_price10,json=bidPrice10,proto3" json:"bid_price10,omitempty"`                                                 // 買-10-値段
+	BidQuantityUnder  float64                `protobuf:"fixed64,71,opt,name=bid_quantity_under,json=bidQuantityUnder,proto3" json:"bid_quantity_under,omitempty"`                             // 買-UNDER
+	Vwap              float64                `protobuf:"fixed64,72,opt,name=vwap,proto3" json:"vwap,omitempty"`                                                                               // VWAP
+	Prp               float64                `protobuf:"fixed64,73,opt,name=prp,proto3" json:"prp,omitempty"`                                                                                 // PRP
+}
+
+func (x *MarketPriceStreamResponse) Reset() {
+	*x = MarketPriceStreamResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_tachibanapb_tachibana_proto_msgTypes[34]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MarketPriceStreamResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarketPriceStreamResponse) ProtoMessage() {}
+
+func (x *MarketPriceStreamResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_tachibanapb_tachibana_proto_msgTypes[34]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarketPriceStreamResponse.ProtoReflect.Descriptor instead.
+func (*MarketPriceStreamResponse) Descriptor() ([]byte, []int) {
+	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *MarketPriceStreamResponse) GetColumnNumber() int64 {
+	if x != nil {
+		return x.ColumnNumber
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetIssueCode() string {
+	if x != nil {
+		return x.IssueCode
+	}
+	return ""
+}
+
+func (x *MarketPriceStreamResponse) GetExchange() Exchange {
+	if x != nil {
+		return x.Exchange
+	}
+	return Exchange_EXCHANGE_UNSPECIFIED
+}
+
+func (x *MarketPriceStreamResponse) GetSection() string {
+	if x != nil {
+		return x.Section
+	}
+	return ""
+}
+
+func (x *MarketPriceStreamResponse) GetCurrentPrice() float64 {
+	if x != nil {
+		return x.CurrentPrice
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetCurrentPriceTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CurrentPriceTime
+	}
+	return nil
+}
+
+func (x *MarketPriceStreamResponse) GetChangePriceType() ChangePriceType {
+	if x != nil {
+		return x.ChangePriceType
+	}
+	return ChangePriceType_CHANGE_PRICE_TYPE_UNSPECIFIED
+}
+
+func (x *MarketPriceStreamResponse) GetPrevDayRatio() float64 {
+	if x != nil {
+		return x.PrevDayRatio
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetPrevDayPercent() float64 {
+	if x != nil {
+		return x.PrevDayPercent
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetOpenPrice() float64 {
+	if x != nil {
+		return x.OpenPrice
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetOpenPriceTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OpenPriceTime
+	}
+	return nil
+}
+
+func (x *MarketPriceStreamResponse) GetHighPrice() float64 {
+	if x != nil {
+		return x.HighPrice
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetHighPriceTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.HighPriceTime
+	}
+	return nil
+}
+
+func (x *MarketPriceStreamResponse) GetLowPrice() float64 {
+	if x != nil {
+		return x.LowPrice
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetLowPriceTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LowPriceTime
+	}
+	return nil
+}
+
+func (x *MarketPriceStreamResponse) GetVolume() float64 {
+	if x != nil {
+		return x.Volume
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskSign() IndicationPriceType {
+	if x != nil {
+		return x.AskSign
+	}
+	return IndicationPriceType_INDICATION_PRICE_TYPE_UNSPECIFIED
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice() float64 {
+	if x != nil {
+		return x.AskPrice
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity() float64 {
+	if x != nil {
+		return x.AskQuantity
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidSign() IndicationPriceType {
+	if x != nil {
+		return x.BidSign
+	}
+	return IndicationPriceType_INDICATION_PRICE_TYPE_UNSPECIFIED
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice() float64 {
+	if x != nil {
+		return x.BidPrice
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity() float64 {
+	if x != nil {
+		return x.BidQuantity
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetExRightType() string {
+	if x != nil {
+		return x.ExRightType
+	}
+	return ""
+}
+
+func (x *MarketPriceStreamResponse) GetDiscontinuityType() string {
+	if x != nil {
+		return x.DiscontinuityType
+	}
+	return ""
+}
+
+func (x *MarketPriceStreamResponse) GetStopHigh() CurrentPriceType {
+	if x != nil {
+		return x.StopHigh
+	}
+	return CurrentPriceType_CURRENT_PRICE_TYPE_UNSPECIFIED
+}
+
+func (x *MarketPriceStreamResponse) GetStopLow() CurrentPriceType {
+	if x != nil {
+		return x.StopLow
+	}
+	return CurrentPriceType_CURRENT_PRICE_TYPE_UNSPECIFIED
+}
+
+func (x *MarketPriceStreamResponse) GetTradingAmount() float64 {
+	if x != nil {
+		return x.TradingAmount
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantityMarket() float64 {
+	if x != nil {
+		return x.AskQuantityMarket
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantityMarket() float64 {
+	if x != nil {
+		return x.BidQuantityMarket
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantityOver() float64 {
+	if x != nil {
+		return x.AskQuantityOver
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity10() float64 {
+	if x != nil {
+		return x.AskQuantity10
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice10() float64 {
+	if x != nil {
+		return x.AskPrice10
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity9() float64 {
+	if x != nil {
+		return x.AskQuantity9
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice9() float64 {
+	if x != nil {
+		return x.AskPrice9
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity8() float64 {
+	if x != nil {
+		return x.AskQuantity8
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice8() float64 {
+	if x != nil {
+		return x.AskPrice8
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity7() float64 {
+	if x != nil {
+		return x.AskQuantity7
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice7() float64 {
+	if x != nil {
+		return x.AskPrice7
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity6() float64 {
+	if x != nil {
+		return x.AskQuantity6
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice6() float64 {
+	if x != nil {
+		return x.AskPrice6
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity5() float64 {
+	if x != nil {
+		return x.AskQuantity5
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice5() float64 {
+	if x != nil {
+		return x.AskPrice5
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity4() float64 {
+	if x != nil {
+		return x.AskQuantity4
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice4() float64 {
+	if x != nil {
+		return x.AskPrice4
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity3() float64 {
+	if x != nil {
+		return x.AskQuantity3
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice3() float64 {
+	if x != nil {
+		return x.AskPrice3
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity2() float64 {
+	if x != nil {
+		return x.AskQuantity2
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice2() float64 {
+	if x != nil {
+		return x.AskPrice2
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskQuantity1() float64 {
+	if x != nil {
+		return x.AskQuantity1
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetAskPrice1() float64 {
+	if x != nil {
+		return x.AskPrice1
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity1() float64 {
+	if x != nil {
+		return x.BidQuantity1
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice1() float64 {
+	if x != nil {
+		return x.BidPrice1
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity2() float64 {
+	if x != nil {
+		return x.BidQuantity2
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice2() float64 {
+	if x != nil {
+		return x.BidPrice2
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity3() float64 {
+	if x != nil {
+		return x.BidQuantity3
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice3() float64 {
+	if x != nil {
+		return x.BidPrice3
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity4() float64 {
+	if x != nil {
+		return x.BidQuantity4
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice4() float64 {
+	if x != nil {
+		return x.BidPrice4
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity5() float64 {
+	if x != nil {
+		return x.BidQuantity5
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice5() float64 {
+	if x != nil {
+		return x.BidPrice5
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity6() float64 {
+	if x != nil {
+		return x.BidQuantity6
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice6() float64 {
+	if x != nil {
+		return x.BidPrice6
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity7() float64 {
+	if x != nil {
+		return x.BidQuantity7
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice7() float64 {
+	if x != nil {
+		return x.BidPrice7
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity8() float64 {
+	if x != nil {
+		return x.BidQuantity8
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice8() float64 {
+	if x != nil {
+		return x.BidPrice8
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity9() float64 {
+	if x != nil {
+		return x.BidQuantity9
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice9() float64 {
+	if x != nil {
+		return x.BidPrice9
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantity10() float64 {
+	if x != nil {
+		return x.BidQuantity10
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidPrice10() float64 {
+	if x != nil {
+		return x.BidPrice10
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetBidQuantityUnder() float64 {
+	if x != nil {
+		return x.BidQuantityUnder
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetVwap() float64 {
+	if x != nil {
+		return x.Vwap
+	}
+	return 0
+}
+
+func (x *MarketPriceStreamResponse) GetPrp() float64 {
+	if x != nil {
+		return x.Prp
+	}
+	return 0
 }
 
 type ContractStreamResponse struct {
@@ -7414,7 +8044,7 @@ type ContractStreamResponse struct {
 func (x *ContractStreamResponse) Reset() {
 	*x = ContractStreamResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_tachibanapb_tachibana_proto_msgTypes[34]
+		mi := &file_tachibanapb_tachibana_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7427,7 +8057,7 @@ func (x *ContractStreamResponse) String() string {
 func (*ContractStreamResponse) ProtoMessage() {}
 
 func (x *ContractStreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tachibanapb_tachibana_proto_msgTypes[34]
+	mi := &file_tachibanapb_tachibana_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7440,7 +8070,7 @@ func (x *ContractStreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContractStreamResponse.ProtoReflect.Descriptor instead.
 func (*ContractStreamResponse) Descriptor() ([]byte, []int) {
-	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{34}
+	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ContractStreamResponse) GetProvider() string {
@@ -7738,7 +8368,7 @@ type NewsStreamResponse struct {
 func (x *NewsStreamResponse) Reset() {
 	*x = NewsStreamResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_tachibanapb_tachibana_proto_msgTypes[35]
+		mi := &file_tachibanapb_tachibana_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7751,7 +8381,7 @@ func (x *NewsStreamResponse) String() string {
 func (*NewsStreamResponse) ProtoMessage() {}
 
 func (x *NewsStreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tachibanapb_tachibana_proto_msgTypes[35]
+	mi := &file_tachibanapb_tachibana_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7764,7 +8394,7 @@ func (x *NewsStreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NewsStreamResponse.ProtoReflect.Descriptor instead.
 func (*NewsStreamResponse) Descriptor() ([]byte, []int) {
-	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{35}
+	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *NewsStreamResponse) GetProvider() string {
@@ -7866,7 +8496,7 @@ type SystemStatusStreamResponse struct {
 func (x *SystemStatusStreamResponse) Reset() {
 	*x = SystemStatusStreamResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_tachibanapb_tachibana_proto_msgTypes[36]
+		mi := &file_tachibanapb_tachibana_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7879,7 +8509,7 @@ func (x *SystemStatusStreamResponse) String() string {
 func (*SystemStatusStreamResponse) ProtoMessage() {}
 
 func (x *SystemStatusStreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tachibanapb_tachibana_proto_msgTypes[36]
+	mi := &file_tachibanapb_tachibana_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7892,7 +8522,7 @@ func (x *SystemStatusStreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemStatusStreamResponse.ProtoReflect.Descriptor instead.
 func (*SystemStatusStreamResponse) Descriptor() ([]byte, []int) {
-	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{36}
+	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *SystemStatusStreamResponse) GetProvider() string {
@@ -7950,7 +8580,7 @@ type OperationStatusStreamResponse struct {
 func (x *OperationStatusStreamResponse) Reset() {
 	*x = OperationStatusStreamResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_tachibanapb_tachibana_proto_msgTypes[37]
+		mi := &file_tachibanapb_tachibana_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7963,7 +8593,7 @@ func (x *OperationStatusStreamResponse) String() string {
 func (*OperationStatusStreamResponse) ProtoMessage() {}
 
 func (x *OperationStatusStreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tachibanapb_tachibana_proto_msgTypes[37]
+	mi := &file_tachibanapb_tachibana_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7976,7 +8606,7 @@ func (x *OperationStatusStreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperationStatusStreamResponse.ProtoReflect.Descriptor instead.
 func (*OperationStatusStreamResponse) Descriptor() ([]byte, []int) {
-	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{37}
+	return file_tachibanapb_tachibana_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *OperationStatusStreamResponse) GetProvider() string {
@@ -9211,7 +9841,7 @@ var file_tachibanapb_tachibana_proto_rawDesc = []byte{
 	0x12, 0x31, 0x0a, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01,
 	0x28, 0x0e, 0x32, 0x15, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62,
 	0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61,
-	0x6e, 0x67, 0x65, 0x22, 0xd3, 0x05, 0x0a, 0x0e, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65,
+	0x6e, 0x67, 0x65, 0x22, 0xbc, 0x06, 0x0a, 0x0e, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65,
 	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x0a, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x5f,
 	0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x16, 0x2e, 0x74, 0x61, 0x63,
 	0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x54, 0x79,
@@ -9231,32 +9861,216 @@ var file_tachibanapb_tachibana_proto_rawDesc = []byte{
 	0x0a, 0x04, 0x62, 0x6f, 0x64, 0x79, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x62, 0x6f,
 	0x64, 0x79, 0x12, 0x22, 0x0a, 0x0d, 0x69, 0x73, 0x5f, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f, 0x74,
 	0x69, 0x6d, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0b, 0x69, 0x73, 0x46, 0x69, 0x72,
-	0x73, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x5d, 0x0a, 0x18, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x61,
-	0x63, 0x74, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69,
-	0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x53,
-	0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x16, 0x63,
-	0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x14, 0x6e, 0x65, 0x77, 0x73, 0x5f, 0x73, 0x74,
-	0x72, 0x65, 0x61, 0x6d, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x0a, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70,
-	0x62, 0x2e, 0x4e, 0x65, 0x77, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x52, 0x12, 0x6e, 0x65, 0x77, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6a, 0x0a, 0x1d, 0x73, 0x79, 0x73, 0x74,
-	0x65, 0x6d, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d,
-	0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x27, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x53, 0x79,
-	0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x1a, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d,
-	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x73, 0x0a, 0x20, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f,
-	0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a,
-	0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65,
-	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65,
-	0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x1d, 0x6f, 0x70, 0x65, 0x72,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61,
-	0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xdc, 0x10, 0x0a, 0x16, 0x43, 0x6f,
+	0x73, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x67, 0x0a, 0x1c, 0x6d, 0x61, 0x72, 0x6b, 0x65, 0x74,
+	0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f, 0x72, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x74,
+	0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x4d, 0x61, 0x72, 0x6b, 0x65,
+	0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x52, 0x19, 0x6d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x50, 0x72, 0x69, 0x63,
+	0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x5d, 0x0a, 0x18, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x5f, 0x73, 0x74, 0x72, 0x65,
+	0x61, 0x6d, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x09, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x23, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e,
+	0x43, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x16, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74,
+	0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51,
+	0x0a, 0x14, 0x6e, 0x65, 0x77, 0x73, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f, 0x72, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x74,
+	0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x4e, 0x65, 0x77, 0x73, 0x53,
+	0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x12, 0x6e,
+	0x65, 0x77, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x6a, 0x0a, 0x1d, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x5f, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69,
+	0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x52, 0x1a, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53,
+	0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x73, 0x0a,
+	0x20, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x5f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62,
+	0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x52, 0x1d, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x94, 0x16, 0x0a, 0x19, 0x4d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x50, 0x72, 0x69,
+	0x63, 0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x23, 0x0a, 0x0d, 0x63, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x5f, 0x6e, 0x75, 0x6d, 0x62, 0x65,
+	0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x63, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x4e,
+	0x75, 0x6d, 0x62, 0x65, 0x72, 0x12, 0x1d, 0x0a, 0x0a, 0x69, 0x73, 0x73, 0x75, 0x65, 0x5f, 0x63,
+	0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x69, 0x73, 0x73, 0x75, 0x65,
+	0x43, 0x6f, 0x64, 0x65, 0x12, 0x31, 0x0a, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x15, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61,
+	0x6e, 0x61, 0x70, 0x62, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x08, 0x65,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x65, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73, 0x65, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x12, 0x23, 0x0a, 0x0d, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x5f, 0x70, 0x72, 0x69,
+	0x63, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e,
+	0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x48, 0x0a, 0x12, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e,
+	0x74, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x06, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x10,
+	0x63, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x69, 0x6d, 0x65,
+	0x12, 0x48, 0x0a, 0x11, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65,
+	0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1c, 0x2e, 0x74, 0x61,
+	0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0f, 0x63, 0x68, 0x61, 0x6e, 0x67,
+	0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x24, 0x0a, 0x0e, 0x70, 0x72,
+	0x65, 0x76, 0x5f, 0x64, 0x61, 0x79, 0x5f, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x18, 0x08, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x0c, 0x70, 0x72, 0x65, 0x76, 0x44, 0x61, 0x79, 0x52, 0x61, 0x74, 0x69, 0x6f,
+	0x12, 0x28, 0x0a, 0x10, 0x70, 0x72, 0x65, 0x76, 0x5f, 0x64, 0x61, 0x79, 0x5f, 0x70, 0x65, 0x72,
+	0x63, 0x65, 0x6e, 0x74, 0x18, 0x09, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0e, 0x70, 0x72, 0x65, 0x76,
+	0x44, 0x61, 0x79, 0x50, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x6f, 0x70,
+	0x65, 0x6e, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09,
+	0x6f, 0x70, 0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x42, 0x0a, 0x0f, 0x6f, 0x70, 0x65,
+	0x6e, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x0b, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0d,
+	0x6f, 0x70, 0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x1d, 0x0a,
+	0x0a, 0x68, 0x69, 0x67, 0x68, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x0c, 0x20, 0x01, 0x28,
+	0x01, 0x52, 0x09, 0x68, 0x69, 0x67, 0x68, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x42, 0x0a, 0x0f,
+	0x68, 0x69, 0x67, 0x68, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18,
+	0x0d, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
+	0x70, 0x52, 0x0d, 0x68, 0x69, 0x67, 0x68, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x69, 0x6d, 0x65,
+	0x12, 0x1b, 0x0a, 0x09, 0x6c, 0x6f, 0x77, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x0e, 0x20,
+	0x01, 0x28, 0x01, 0x52, 0x08, 0x6c, 0x6f, 0x77, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x40, 0x0a,
+	0x0e, 0x6c, 0x6f, 0x77, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18,
+	0x0f, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
+	0x70, 0x52, 0x0c, 0x6c, 0x6f, 0x77, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x69, 0x6d, 0x65, 0x12,
+	0x16, 0x0a, 0x06, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x18, 0x10, 0x20, 0x01, 0x28, 0x01, 0x52,
+	0x06, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x12, 0x3b, 0x0a, 0x08, 0x61, 0x73, 0x6b, 0x5f, 0x73,
+	0x69, 0x67, 0x6e, 0x18, 0x11, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x20, 0x2e, 0x74, 0x61, 0x63, 0x68,
+	0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x49, 0x6e, 0x64, 0x69, 0x63, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x61, 0x73, 0x6b,
+	0x53, 0x69, 0x67, 0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63,
+	0x65, 0x18, 0x12, 0x20, 0x01, 0x28, 0x01, 0x52, 0x08, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63,
+	0x65, 0x12, 0x21, 0x0a, 0x0c, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x18, 0x13, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0b, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e,
+	0x74, 0x69, 0x74, 0x79, 0x12, 0x3b, 0x0a, 0x08, 0x62, 0x69, 0x64, 0x5f, 0x73, 0x69, 0x67, 0x6e,
+	0x18, 0x14, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x20, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61,
+	0x6e, 0x61, 0x70, 0x62, 0x2e, 0x49, 0x6e, 0x64, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x62, 0x69, 0x64, 0x53, 0x69, 0x67,
+	0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x15,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x08, 0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x21,
+	0x0a, 0x0c, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x16,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x0b, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x12, 0x22, 0x0a, 0x0d, 0x65, 0x78, 0x5f, 0x72, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x74, 0x79,
+	0x70, 0x65, 0x18, 0x17, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x65, 0x78, 0x52, 0x69, 0x67, 0x68,
+	0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x2d, 0x0a, 0x12, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x74,
+	0x69, 0x6e, 0x75, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x18, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x11, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x74, 0x69, 0x6e, 0x75, 0x69, 0x74, 0x79,
+	0x54, 0x79, 0x70, 0x65, 0x12, 0x3a, 0x0a, 0x09, 0x73, 0x74, 0x6f, 0x70, 0x5f, 0x68, 0x69, 0x67,
+	0x68, 0x18, 0x19, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1d, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62,
+	0x61, 0x6e, 0x61, 0x70, 0x62, 0x2e, 0x43, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x50, 0x72, 0x69,
+	0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x08, 0x73, 0x74, 0x6f, 0x70, 0x48, 0x69, 0x67, 0x68,
+	0x12, 0x38, 0x0a, 0x08, 0x73, 0x74, 0x6f, 0x70, 0x5f, 0x6c, 0x6f, 0x77, 0x18, 0x1a, 0x20, 0x01,
+	0x28, 0x0e, 0x32, 0x1d, 0x2e, 0x74, 0x61, 0x63, 0x68, 0x69, 0x62, 0x61, 0x6e, 0x61, 0x70, 0x62,
+	0x2e, 0x43, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70,
+	0x65, 0x52, 0x07, 0x73, 0x74, 0x6f, 0x70, 0x4c, 0x6f, 0x77, 0x12, 0x25, 0x0a, 0x0e, 0x74, 0x72,
+	0x61, 0x64, 0x69, 0x6e, 0x67, 0x5f, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x1b, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x0d, 0x74, 0x72, 0x61, 0x64, 0x69, 0x6e, 0x67, 0x41, 0x6d, 0x6f, 0x75, 0x6e,
+	0x74, 0x12, 0x2e, 0x0a, 0x13, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x5f, 0x6d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x18, 0x1c, 0x20, 0x01, 0x28, 0x01, 0x52, 0x11,
+	0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x4d, 0x61, 0x72, 0x6b, 0x65,
+	0x74, 0x12, 0x2e, 0x0a, 0x13, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x5f, 0x6d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x18, 0x1d, 0x20, 0x01, 0x28, 0x01, 0x52, 0x11,
+	0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x4d, 0x61, 0x72, 0x6b, 0x65,
+	0x74, 0x12, 0x2a, 0x0a, 0x11, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x5f, 0x6f, 0x76, 0x65, 0x72, 0x18, 0x1e, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0f, 0x61, 0x73,
+	0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x4f, 0x76, 0x65, 0x72, 0x12, 0x25, 0x0a,
+	0x0e, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x31, 0x30, 0x18,
+	0x1f, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0d, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69,
+	0x74, 0x79, 0x31, 0x30, 0x12, 0x1f, 0x0a, 0x0b, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63,
+	0x65, 0x31, 0x30, 0x18, 0x20, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0a, 0x61, 0x73, 0x6b, 0x50, 0x72,
+	0x69, 0x63, 0x65, 0x31, 0x30, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x39, 0x18, 0x21, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73,
+	0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x39, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73,
+	0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x39, 0x18, 0x22, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09,
+	0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65, 0x39, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b,
+	0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x38, 0x18, 0x23, 0x20, 0x01, 0x28, 0x01,
+	0x52, 0x0c, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x38, 0x12, 0x1d,
+	0x0a, 0x0a, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x38, 0x18, 0x24, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x09, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65, 0x38, 0x12, 0x23, 0x0a,
+	0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x37, 0x18, 0x25,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x37, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x37,
+	0x18, 0x26, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65,
+	0x37, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x36, 0x18, 0x27, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x36, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72,
+	0x69, 0x63, 0x65, 0x36, 0x18, 0x28, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x61, 0x73, 0x6b, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x36, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x35, 0x18, 0x29, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73,
+	0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x35, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73,
+	0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x35, 0x18, 0x2a, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09,
+	0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65, 0x35, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b,
+	0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x34, 0x18, 0x2b, 0x20, 0x01, 0x28, 0x01,
+	0x52, 0x0c, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x34, 0x12, 0x1d,
+	0x0a, 0x0a, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x34, 0x18, 0x2c, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x09, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65, 0x34, 0x12, 0x23, 0x0a,
+	0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x33, 0x18, 0x2d,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x33, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x33,
+	0x18, 0x2e, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65,
+	0x33, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x32, 0x18, 0x2f, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73, 0x6b, 0x51, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x32, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73, 0x6b, 0x5f, 0x70, 0x72,
+	0x69, 0x63, 0x65, 0x32, 0x18, 0x30, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x61, 0x73, 0x6b, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x32, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x73, 0x6b, 0x5f, 0x71, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x31, 0x18, 0x31, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x61, 0x73,
+	0x6b, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x31, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x73,
+	0x6b, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x31, 0x18, 0x32, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09,
+	0x61, 0x73, 0x6b, 0x50, 0x72, 0x69, 0x63, 0x65, 0x31, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64,
+	0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x31, 0x18, 0x33, 0x20, 0x01, 0x28, 0x01,
+	0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x31, 0x12, 0x1d,
+	0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x31, 0x18, 0x34, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65, 0x31, 0x12, 0x23, 0x0a,
+	0x0d, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x32, 0x18, 0x35,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x32, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x32,
+	0x18, 0x36, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65,
+	0x32, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x33, 0x18, 0x37, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x33, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72,
+	0x69, 0x63, 0x65, 0x33, 0x18, 0x38, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x33, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x34, 0x18, 0x39, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x62, 0x69,
+	0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x34, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x69,
+	0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x34, 0x18, 0x3a, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09,
+	0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65, 0x34, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64,
+	0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x35, 0x18, 0x3b, 0x20, 0x01, 0x28, 0x01,
+	0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x35, 0x12, 0x1d,
+	0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x35, 0x18, 0x3c, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65, 0x35, 0x12, 0x23, 0x0a,
+	0x0d, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x36, 0x18, 0x3d,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x36, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x36,
+	0x18, 0x3e, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65,
+	0x36, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x37, 0x18, 0x3f, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x37, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72,
+	0x69, 0x63, 0x65, 0x37, 0x18, 0x40, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x37, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x38, 0x18, 0x41, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0c, 0x62, 0x69,
+	0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x38, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x69,
+	0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x38, 0x18, 0x42, 0x20, 0x01, 0x28, 0x01, 0x52, 0x09,
+	0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65, 0x38, 0x12, 0x23, 0x0a, 0x0d, 0x62, 0x69, 0x64,
+	0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x39, 0x18, 0x43, 0x20, 0x01, 0x28, 0x01,
+	0x52, 0x0c, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x39, 0x12, 0x1d,
+	0x0a, 0x0a, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x39, 0x18, 0x44, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x09, 0x62, 0x69, 0x64, 0x50, 0x72, 0x69, 0x63, 0x65, 0x39, 0x12, 0x25, 0x0a,
+	0x0e, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x31, 0x30, 0x18,
+	0x45, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0d, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69,
+	0x74, 0x79, 0x31, 0x30, 0x12, 0x1f, 0x0a, 0x0b, 0x62, 0x69, 0x64, 0x5f, 0x70, 0x72, 0x69, 0x63,
+	0x65, 0x31, 0x30, 0x18, 0x46, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0a, 0x62, 0x69, 0x64, 0x50, 0x72,
+	0x69, 0x63, 0x65, 0x31, 0x30, 0x12, 0x2c, 0x0a, 0x12, 0x62, 0x69, 0x64, 0x5f, 0x71, 0x75, 0x61,
+	0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x75, 0x6e, 0x64, 0x65, 0x72, 0x18, 0x47, 0x20, 0x01, 0x28,
+	0x01, 0x52, 0x10, 0x62, 0x69, 0x64, 0x51, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x55, 0x6e,
+	0x64, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x76, 0x77, 0x61, 0x70, 0x18, 0x48, 0x20, 0x01, 0x28,
+	0x01, 0x52, 0x04, 0x76, 0x77, 0x61, 0x70, 0x12, 0x10, 0x0a, 0x03, 0x70, 0x72, 0x70, 0x18, 0x49,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x03, 0x70, 0x72, 0x70, 0x22, 0xdc, 0x10, 0x0a, 0x16, 0x43, 0x6f,
 	0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70,
 	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72,
@@ -10512,7 +11326,7 @@ func file_tachibanapb_tachibana_proto_rawDescGZIP() []byte {
 }
 
 var file_tachibanapb_tachibana_proto_enumTypes = make([]protoimpl.EnumInfo, 42)
-var file_tachibanapb_tachibana_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_tachibanapb_tachibana_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_tachibanapb_tachibana_proto_goTypes = []interface{}{
 	(ErrorNo)(0),                          // 0: tachibanapb.ErrorNo
 	(MessageType)(0),                      // 1: tachibanapb.MessageType
@@ -10590,20 +11404,21 @@ var file_tachibanapb_tachibana_proto_goTypes = []interface{}{
 	(*StreamRequest)(nil),                 // 73: tachibanapb.StreamRequest
 	(*StreamIssue)(nil),                   // 74: tachibanapb.StreamIssue
 	(*StreamResponse)(nil),                // 75: tachibanapb.StreamResponse
-	(*ContractStreamResponse)(nil),        // 76: tachibanapb.ContractStreamResponse
-	(*NewsStreamResponse)(nil),            // 77: tachibanapb.NewsStreamResponse
-	(*SystemStatusStreamResponse)(nil),    // 78: tachibanapb.SystemStatusStreamResponse
-	(*OperationStatusStreamResponse)(nil), // 79: tachibanapb.OperationStatusStreamResponse
-	(*timestamppb.Timestamp)(nil),         // 80: google.protobuf.Timestamp
+	(*MarketPriceStreamResponse)(nil),     // 76: tachibanapb.MarketPriceStreamResponse
+	(*ContractStreamResponse)(nil),        // 77: tachibanapb.ContractStreamResponse
+	(*NewsStreamResponse)(nil),            // 78: tachibanapb.NewsStreamResponse
+	(*SystemStatusStreamResponse)(nil),    // 79: tachibanapb.SystemStatusStreamResponse
+	(*OperationStatusStreamResponse)(nil), // 80: tachibanapb.OperationStatusStreamResponse
+	(*timestamppb.Timestamp)(nil),         // 81: google.protobuf.Timestamp
 }
 var file_tachibanapb_tachibana_proto_depIdxs = []int32{
-	80,  // 0: tachibanapb.CommonResponse.send_date:type_name -> google.protobuf.Timestamp
-	80,  // 1: tachibanapb.CommonResponse.receive_date:type_name -> google.protobuf.Timestamp
+	81,  // 0: tachibanapb.CommonResponse.send_date:type_name -> google.protobuf.Timestamp
+	81,  // 1: tachibanapb.CommonResponse.receive_date:type_name -> google.protobuf.Timestamp
 	0,   // 2: tachibanapb.CommonResponse.error_no:type_name -> tachibanapb.ErrorNo
 	1,   // 3: tachibanapb.CommonResponse.message_type:type_name -> tachibanapb.MessageType
 	42,  // 4: tachibanapb.LoginResponse.common_response:type_name -> tachibanapb.CommonResponse
 	2,   // 5: tachibanapb.LoginResponse.account_type:type_name -> tachibanapb.AccountType
-	80,  // 6: tachibanapb.LoginResponse.last_login_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 6: tachibanapb.LoginResponse.last_login_datetime:type_name -> google.protobuf.Timestamp
 	3,   // 7: tachibanapb.LoginResponse.stock_specific_account:type_name -> tachibanapb.SpecificAccountType
 	3,   // 8: tachibanapb.LoginResponse.margin_specific_account:type_name -> tachibanapb.SpecificAccountType
 	3,   // 9: tachibanapb.LoginResponse.investment_specific_account:type_name -> tachibanapb.SpecificAccountType
@@ -10613,21 +11428,21 @@ var file_tachibanapb_tachibana_proto_depIdxs = []int32{
 	6,   // 13: tachibanapb.NewOrderRequest.side:type_name -> tachibanapb.Side
 	7,   // 14: tachibanapb.NewOrderRequest.execution_timing:type_name -> tachibanapb.ExecutionTiming
 	8,   // 15: tachibanapb.NewOrderRequest.trade_type:type_name -> tachibanapb.TradeType
-	80,  // 16: tachibanapb.NewOrderRequest.expire_date:type_name -> google.protobuf.Timestamp
+	81,  // 16: tachibanapb.NewOrderRequest.expire_date:type_name -> google.protobuf.Timestamp
 	9,   // 17: tachibanapb.NewOrderRequest.stop_order_type:type_name -> tachibanapb.StopOrderType
 	10,  // 18: tachibanapb.NewOrderRequest.exit_position_type:type_name -> tachibanapb.ExitPositionType
 	46,  // 19: tachibanapb.NewOrderRequest.exit_positions:type_name -> tachibanapb.ExitPosition
 	42,  // 20: tachibanapb.NewOrderResponse.common_response:type_name -> tachibanapb.CommonResponse
-	80,  // 21: tachibanapb.NewOrderResponse.execution_date:type_name -> google.protobuf.Timestamp
-	80,  // 22: tachibanapb.NewOrderResponse.order_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 23: tachibanapb.CancelOrderRequest.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 21: tachibanapb.NewOrderResponse.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 22: tachibanapb.NewOrderResponse.order_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 23: tachibanapb.CancelOrderRequest.execution_date:type_name -> google.protobuf.Timestamp
 	42,  // 24: tachibanapb.CancelOrderResponse.common_response:type_name -> tachibanapb.CommonResponse
-	80,  // 25: tachibanapb.CancelOrderResponse.execution_date:type_name -> google.protobuf.Timestamp
-	80,  // 26: tachibanapb.CancelOrderResponse.order_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 27: tachibanapb.OrderListRequest.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 25: tachibanapb.CancelOrderResponse.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 26: tachibanapb.CancelOrderResponse.order_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 27: tachibanapb.OrderListRequest.execution_date:type_name -> google.protobuf.Timestamp
 	11,  // 28: tachibanapb.OrderListRequest.order_inquiry_status:type_name -> tachibanapb.OrderInquiryStatus
 	42,  // 29: tachibanapb.OrderListResponse.common_response:type_name -> tachibanapb.CommonResponse
-	80,  // 30: tachibanapb.OrderListResponse.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 30: tachibanapb.OrderListResponse.execution_date:type_name -> google.protobuf.Timestamp
 	11,  // 31: tachibanapb.OrderListResponse.order_inquiry_status:type_name -> tachibanapb.OrderInquiryStatus
 	52,  // 32: tachibanapb.OrderListResponse.orders:type_name -> tachibanapb.Order
 	5,   // 33: tachibanapb.Order.exchange:type_name -> tachibanapb.Exchange
@@ -10642,16 +11457,16 @@ var file_tachibanapb_tachibana_proto_depIdxs = []int32{
 	14,  // 42: tachibanapb.Order.trigger_type:type_name -> tachibanapb.TriggerType
 	10,  // 43: tachibanapb.Order.exit_position_type:type_name -> tachibanapb.ExitPositionType
 	15,  // 44: tachibanapb.Order.part_contract_type:type_name -> tachibanapb.PartContractType
-	80,  // 45: tachibanapb.Order.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 45: tachibanapb.Order.execution_date:type_name -> google.protobuf.Timestamp
 	16,  // 46: tachibanapb.Order.order_status:type_name -> tachibanapb.OrderStatus
 	17,  // 47: tachibanapb.Order.contract_status:type_name -> tachibanapb.ContractStatus
-	80,  // 48: tachibanapb.Order.order_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 49: tachibanapb.Order.expire_date:type_name -> google.protobuf.Timestamp
+	81,  // 48: tachibanapb.Order.order_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 49: tachibanapb.Order.expire_date:type_name -> google.protobuf.Timestamp
 	18,  // 50: tachibanapb.Order.carry_over_type:type_name -> tachibanapb.CarryOverType
 	19,  // 51: tachibanapb.Order.correct_cancel_type:type_name -> tachibanapb.CorrectCancelType
-	80,  // 52: tachibanapb.OrderDetailRequest.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 52: tachibanapb.OrderDetailRequest.execution_date:type_name -> google.protobuf.Timestamp
 	42,  // 53: tachibanapb.OrderDetailResponse.common_response:type_name -> tachibanapb.CommonResponse
-	80,  // 54: tachibanapb.OrderDetailResponse.execution_date:type_name -> google.protobuf.Timestamp
+	81,  // 54: tachibanapb.OrderDetailResponse.execution_date:type_name -> google.protobuf.Timestamp
 	5,   // 55: tachibanapb.OrderDetailResponse.exchange:type_name -> tachibanapb.Exchange
 	6,   // 56: tachibanapb.OrderDetailResponse.side:type_name -> tachibanapb.Side
 	8,   // 57: tachibanapb.OrderDetailResponse.trade_type:type_name -> tachibanapb.TradeType
@@ -10659,63 +11474,63 @@ var file_tachibanapb_tachibana_proto_depIdxs = []int32{
 	7,   // 59: tachibanapb.OrderDetailResponse.execution_timing:type_name -> tachibanapb.ExecutionTiming
 	13,  // 60: tachibanapb.OrderDetailResponse.execution_type:type_name -> tachibanapb.ExecutionType
 	16,  // 61: tachibanapb.OrderDetailResponse.order_status:type_name -> tachibanapb.OrderStatus
-	80,  // 62: tachibanapb.OrderDetailResponse.order_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 63: tachibanapb.OrderDetailResponse.expire_date:type_name -> google.protobuf.Timestamp
+	81,  // 62: tachibanapb.OrderDetailResponse.order_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 63: tachibanapb.OrderDetailResponse.expire_date:type_name -> google.protobuf.Timestamp
 	20,  // 64: tachibanapb.OrderDetailResponse.channel:type_name -> tachibanapb.Channel
 	2,   // 65: tachibanapb.OrderDetailResponse.stock_account_type:type_name -> tachibanapb.AccountType
 	2,   // 66: tachibanapb.OrderDetailResponse.margin_account_type:type_name -> tachibanapb.AccountType
 	9,   // 67: tachibanapb.OrderDetailResponse.stop_order_type:type_name -> tachibanapb.StopOrderType
 	13,  // 68: tachibanapb.OrderDetailResponse.stop_order_execution_type:type_name -> tachibanapb.ExecutionType
 	14,  // 69: tachibanapb.OrderDetailResponse.trigger_type:type_name -> tachibanapb.TriggerType
-	80,  // 70: tachibanapb.OrderDetailResponse.trigger_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 71: tachibanapb.OrderDetailResponse.delivery_date:type_name -> google.protobuf.Timestamp
+	81,  // 70: tachibanapb.OrderDetailResponse.trigger_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 71: tachibanapb.OrderDetailResponse.delivery_date:type_name -> google.protobuf.Timestamp
 	15,  // 72: tachibanapb.OrderDetailResponse.part_contract_type:type_name -> tachibanapb.PartContractType
 	10,  // 73: tachibanapb.OrderDetailResponse.exit_position_type:type_name -> tachibanapb.ExitPositionType
-	80,  // 74: tachibanapb.OrderDetailResponse.exchange_order_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 74: tachibanapb.OrderDetailResponse.exchange_order_datetime:type_name -> google.protobuf.Timestamp
 	55,  // 75: tachibanapb.OrderDetailResponse.contracts:type_name -> tachibanapb.Contract
 	56,  // 76: tachibanapb.OrderDetailResponse.hold_positions:type_name -> tachibanapb.HoldPosition
-	80,  // 77: tachibanapb.Contract.datetime:type_name -> google.protobuf.Timestamp
-	80,  // 78: tachibanapb.HoldPosition.contract_date:type_name -> google.protobuf.Timestamp
+	81,  // 77: tachibanapb.Contract.datetime:type_name -> google.protobuf.Timestamp
+	81,  // 78: tachibanapb.HoldPosition.contract_date:type_name -> google.protobuf.Timestamp
 	21,  // 79: tachibanapb.StockMasterRequest.columns:type_name -> tachibanapb.StockMasterColumn
 	42,  // 80: tachibanapb.StockMasterResponse.common_response:type_name -> tachibanapb.CommonResponse
 	59,  // 81: tachibanapb.StockMasterResponse.stock_masters:type_name -> tachibanapb.StockMaster
 	22,  // 82: tachibanapb.StockMaster.tax_free:type_name -> tachibanapb.TaxFree
 	23,  // 83: tachibanapb.StockMaster.ex_right_type:type_name -> tachibanapb.ExRightType
-	80,  // 84: tachibanapb.StockMaster.last_right_day:type_name -> google.protobuf.Timestamp
+	81,  // 84: tachibanapb.StockMaster.last_right_day:type_name -> google.protobuf.Timestamp
 	24,  // 85: tachibanapb.StockMaster.listing_type:type_name -> tachibanapb.ListingType
-	80,  // 86: tachibanapb.StockMaster.release_trading_date:type_name -> google.protobuf.Timestamp
-	80,  // 87: tachibanapb.StockMaster.trading_date:type_name -> google.protobuf.Timestamp
+	81,  // 86: tachibanapb.StockMaster.release_trading_date:type_name -> google.protobuf.Timestamp
+	81,  // 87: tachibanapb.StockMaster.trading_date:type_name -> google.protobuf.Timestamp
 	25,  // 88: tachibanapb.StockMaster.stop_trading_type:type_name -> tachibanapb.StopTradingType
-	80,  // 89: tachibanapb.StockMaster.start_publication_date:type_name -> google.protobuf.Timestamp
-	80,  // 90: tachibanapb.StockMaster.last_publication_date:type_name -> google.protobuf.Timestamp
+	81,  // 89: tachibanapb.StockMaster.start_publication_date:type_name -> google.protobuf.Timestamp
+	81,  // 90: tachibanapb.StockMaster.last_publication_date:type_name -> google.protobuf.Timestamp
 	26,  // 91: tachibanapb.StockMaster.settlement_type:type_name -> tachibanapb.SettlementType
-	80,  // 92: tachibanapb.StockMaster.settlement_date:type_name -> google.protobuf.Timestamp
-	80,  // 93: tachibanapb.StockMaster.listing_date:type_name -> google.protobuf.Timestamp
+	81,  // 92: tachibanapb.StockMaster.settlement_date:type_name -> google.protobuf.Timestamp
+	81,  // 93: tachibanapb.StockMaster.listing_date:type_name -> google.protobuf.Timestamp
 	5,   // 94: tachibanapb.StockMaster.primary_exchange:type_name -> tachibanapb.Exchange
-	80,  // 95: tachibanapb.StockMaster.create_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 96: tachibanapb.StockMaster.update_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 95: tachibanapb.StockMaster.create_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 96: tachibanapb.StockMaster.update_datetime:type_name -> google.protobuf.Timestamp
 	27,  // 97: tachibanapb.StockExchangeMasterRequest.columns:type_name -> tachibanapb.StockExchangeMasterColumn
 	42,  // 98: tachibanapb.StockExchangeMasterResponse.common_response:type_name -> tachibanapb.CommonResponse
 	62,  // 99: tachibanapb.StockExchangeMasterResponse.stock_exchange_masters:type_name -> tachibanapb.StockExchangeMaster
 	5,   // 100: tachibanapb.StockExchangeMaster.exchange:type_name -> tachibanapb.Exchange
 	5,   // 101: tachibanapb.StockExchangeMaster.limit_price_exchange:type_name -> tachibanapb.Exchange
 	28,  // 102: tachibanapb.StockExchangeMaster.margin_type:type_name -> tachibanapb.MarginType
-	80,  // 103: tachibanapb.StockExchangeMaster.listing_date:type_name -> google.protobuf.Timestamp
-	80,  // 104: tachibanapb.StockExchangeMaster.limit_price_date:type_name -> google.protobuf.Timestamp
+	81,  // 103: tachibanapb.StockExchangeMaster.listing_date:type_name -> google.protobuf.Timestamp
+	81,  // 104: tachibanapb.StockExchangeMaster.limit_price_date:type_name -> google.protobuf.Timestamp
 	5,   // 105: tachibanapb.StockExchangeMaster.calculate_limit_price_exchange:type_name -> tachibanapb.Exchange
-	80,  // 106: tachibanapb.StockExchangeMaster.delisting_date:type_name -> google.protobuf.Timestamp
+	81,  // 106: tachibanapb.StockExchangeMaster.delisting_date:type_name -> google.protobuf.Timestamp
 	29,  // 107: tachibanapb.StockExchangeMaster.tick_group_type:type_name -> tachibanapb.TickGroupType
 	29,  // 108: tachibanapb.StockExchangeMaster.next_tick_group_type:type_name -> tachibanapb.TickGroupType
-	80,  // 109: tachibanapb.StockExchangeMaster.create_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 110: tachibanapb.StockExchangeMaster.update_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 109: tachibanapb.StockExchangeMaster.create_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 110: tachibanapb.StockExchangeMaster.update_datetime:type_name -> google.protobuf.Timestamp
 	30,  // 111: tachibanapb.MarketPriceRequest.columns:type_name -> tachibanapb.MarketPriceColumn
 	42,  // 112: tachibanapb.MarketPriceResponse.common_response:type_name -> tachibanapb.CommonResponse
 	65,  // 113: tachibanapb.MarketPriceResponse.market_prices:type_name -> tachibanapb.MarketPrice
-	80,  // 114: tachibanapb.MarketPrice.current_price_time:type_name -> google.protobuf.Timestamp
+	81,  // 114: tachibanapb.MarketPrice.current_price_time:type_name -> google.protobuf.Timestamp
 	31,  // 115: tachibanapb.MarketPrice.change_price_type:type_name -> tachibanapb.ChangePriceType
-	80,  // 116: tachibanapb.MarketPrice.open_price_time:type_name -> google.protobuf.Timestamp
-	80,  // 117: tachibanapb.MarketPrice.high_price_time:type_name -> google.protobuf.Timestamp
-	80,  // 118: tachibanapb.MarketPrice.low_price_time:type_name -> google.protobuf.Timestamp
+	81,  // 116: tachibanapb.MarketPrice.open_price_time:type_name -> google.protobuf.Timestamp
+	81,  // 117: tachibanapb.MarketPrice.high_price_time:type_name -> google.protobuf.Timestamp
+	81,  // 118: tachibanapb.MarketPrice.low_price_time:type_name -> google.protobuf.Timestamp
 	32,  // 119: tachibanapb.MarketPrice.ask_sign:type_name -> tachibanapb.IndicationPriceType
 	32,  // 120: tachibanapb.MarketPrice.bid_sign:type_name -> tachibanapb.IndicationPriceType
 	33,  // 121: tachibanapb.MarketPrice.stop_high:type_name -> tachibanapb.CurrentPriceType
@@ -10723,91 +11538,102 @@ var file_tachibanapb_tachibana_proto_depIdxs = []int32{
 	42,  // 123: tachibanapb.BusinessDayResponse.common_response:type_name -> tachibanapb.CommonResponse
 	68,  // 124: tachibanapb.BusinessDayResponse.business_days:type_name -> tachibanapb.BusinessDay
 	34,  // 125: tachibanapb.BusinessDay.day_key:type_name -> tachibanapb.DayKey
-	80,  // 126: tachibanapb.BusinessDay.prev_day1:type_name -> google.protobuf.Timestamp
-	80,  // 127: tachibanapb.BusinessDay.prev_day2:type_name -> google.protobuf.Timestamp
-	80,  // 128: tachibanapb.BusinessDay.prev_day3:type_name -> google.protobuf.Timestamp
-	80,  // 129: tachibanapb.BusinessDay.today:type_name -> google.protobuf.Timestamp
-	80,  // 130: tachibanapb.BusinessDay.next_day1:type_name -> google.protobuf.Timestamp
-	80,  // 131: tachibanapb.BusinessDay.next_day2:type_name -> google.protobuf.Timestamp
-	80,  // 132: tachibanapb.BusinessDay.next_day3:type_name -> google.protobuf.Timestamp
-	80,  // 133: tachibanapb.BusinessDay.next_day4:type_name -> google.protobuf.Timestamp
-	80,  // 134: tachibanapb.BusinessDay.next_day5:type_name -> google.protobuf.Timestamp
-	80,  // 135: tachibanapb.BusinessDay.next_day6:type_name -> google.protobuf.Timestamp
-	80,  // 136: tachibanapb.BusinessDay.next_day7:type_name -> google.protobuf.Timestamp
-	80,  // 137: tachibanapb.BusinessDay.next_day8:type_name -> google.protobuf.Timestamp
-	80,  // 138: tachibanapb.BusinessDay.next_day9:type_name -> google.protobuf.Timestamp
-	80,  // 139: tachibanapb.BusinessDay.next_day10:type_name -> google.protobuf.Timestamp
-	80,  // 140: tachibanapb.BusinessDay.delivery_day:type_name -> google.protobuf.Timestamp
-	80,  // 141: tachibanapb.BusinessDay.provisional_delivery_day:type_name -> google.protobuf.Timestamp
-	80,  // 142: tachibanapb.BusinessDay.bond_delivery_day:type_name -> google.protobuf.Timestamp
+	81,  // 126: tachibanapb.BusinessDay.prev_day1:type_name -> google.protobuf.Timestamp
+	81,  // 127: tachibanapb.BusinessDay.prev_day2:type_name -> google.protobuf.Timestamp
+	81,  // 128: tachibanapb.BusinessDay.prev_day3:type_name -> google.protobuf.Timestamp
+	81,  // 129: tachibanapb.BusinessDay.today:type_name -> google.protobuf.Timestamp
+	81,  // 130: tachibanapb.BusinessDay.next_day1:type_name -> google.protobuf.Timestamp
+	81,  // 131: tachibanapb.BusinessDay.next_day2:type_name -> google.protobuf.Timestamp
+	81,  // 132: tachibanapb.BusinessDay.next_day3:type_name -> google.protobuf.Timestamp
+	81,  // 133: tachibanapb.BusinessDay.next_day4:type_name -> google.protobuf.Timestamp
+	81,  // 134: tachibanapb.BusinessDay.next_day5:type_name -> google.protobuf.Timestamp
+	81,  // 135: tachibanapb.BusinessDay.next_day6:type_name -> google.protobuf.Timestamp
+	81,  // 136: tachibanapb.BusinessDay.next_day7:type_name -> google.protobuf.Timestamp
+	81,  // 137: tachibanapb.BusinessDay.next_day8:type_name -> google.protobuf.Timestamp
+	81,  // 138: tachibanapb.BusinessDay.next_day9:type_name -> google.protobuf.Timestamp
+	81,  // 139: tachibanapb.BusinessDay.next_day10:type_name -> google.protobuf.Timestamp
+	81,  // 140: tachibanapb.BusinessDay.delivery_day:type_name -> google.protobuf.Timestamp
+	81,  // 141: tachibanapb.BusinessDay.provisional_delivery_day:type_name -> google.protobuf.Timestamp
+	81,  // 142: tachibanapb.BusinessDay.bond_delivery_day:type_name -> google.protobuf.Timestamp
 	42,  // 143: tachibanapb.TickGroupResponse.common_response:type_name -> tachibanapb.CommonResponse
 	71,  // 144: tachibanapb.TickGroupResponse.tick_groups:type_name -> tachibanapb.TickGroup
 	29,  // 145: tachibanapb.TickGroup.tick_group_type:type_name -> tachibanapb.TickGroupType
-	80,  // 146: tachibanapb.TickGroup.start_date:type_name -> google.protobuf.Timestamp
+	81,  // 146: tachibanapb.TickGroup.start_date:type_name -> google.protobuf.Timestamp
 	72,  // 147: tachibanapb.TickGroup.tick_group_list:type_name -> tachibanapb.TickGroupPrice
-	80,  // 148: tachibanapb.TickGroup.create_date:type_name -> google.protobuf.Timestamp
-	80,  // 149: tachibanapb.TickGroup.update_date:type_name -> google.protobuf.Timestamp
+	81,  // 148: tachibanapb.TickGroup.create_date:type_name -> google.protobuf.Timestamp
+	81,  // 149: tachibanapb.TickGroup.update_date:type_name -> google.protobuf.Timestamp
 	35,  // 150: tachibanapb.StreamRequest.event_types:type_name -> tachibanapb.EventType
 	74,  // 151: tachibanapb.StreamRequest.stream_issues:type_name -> tachibanapb.StreamIssue
 	5,   // 152: tachibanapb.StreamIssue.exchange:type_name -> tachibanapb.Exchange
 	35,  // 153: tachibanapb.StreamResponse.event_type:type_name -> tachibanapb.EventType
-	80,  // 154: tachibanapb.StreamResponse.stream_date_time:type_name -> google.protobuf.Timestamp
+	81,  // 154: tachibanapb.StreamResponse.stream_date_time:type_name -> google.protobuf.Timestamp
 	0,   // 155: tachibanapb.StreamResponse.error_no:type_name -> tachibanapb.ErrorNo
-	76,  // 156: tachibanapb.StreamResponse.contract_stream_response:type_name -> tachibanapb.ContractStreamResponse
-	77,  // 157: tachibanapb.StreamResponse.news_stream_response:type_name -> tachibanapb.NewsStreamResponse
-	78,  // 158: tachibanapb.StreamResponse.system_status_stream_response:type_name -> tachibanapb.SystemStatusStreamResponse
-	79,  // 159: tachibanapb.StreamResponse.operation_status_stream_response:type_name -> tachibanapb.OperationStatusStreamResponse
-	38,  // 160: tachibanapb.ContractStreamResponse.stream_order_type:type_name -> tachibanapb.StreamOrderType
-	80,  // 161: tachibanapb.ContractStreamResponse.execution_date:type_name -> google.protobuf.Timestamp
-	39,  // 162: tachibanapb.ContractStreamResponse.product_type:type_name -> tachibanapb.ProductType
-	5,   // 163: tachibanapb.ContractStreamResponse.exchange:type_name -> tachibanapb.Exchange
-	6,   // 164: tachibanapb.ContractStreamResponse.side:type_name -> tachibanapb.Side
-	8,   // 165: tachibanapb.ContractStreamResponse.trade_type:type_name -> tachibanapb.TradeType
-	7,   // 166: tachibanapb.ContractStreamResponse.execution_timing:type_name -> tachibanapb.ExecutionTiming
-	13,  // 167: tachibanapb.ContractStreamResponse.execution_type:type_name -> tachibanapb.ExecutionType
-	40,  // 168: tachibanapb.ContractStreamResponse.stream_order_status:type_name -> tachibanapb.StreamOrderStatus
-	18,  // 169: tachibanapb.ContractStreamResponse.carry_over_type:type_name -> tachibanapb.CarryOverType
-	41,  // 170: tachibanapb.ContractStreamResponse.cancel_order_status:type_name -> tachibanapb.CancelOrderStatus
-	17,  // 171: tachibanapb.ContractStreamResponse.contract_status:type_name -> tachibanapb.ContractStatus
-	80,  // 172: tachibanapb.ContractStreamResponse.expire_date:type_name -> google.protobuf.Timestamp
-	80,  // 173: tachibanapb.ContractStreamResponse.notify_datetime:type_name -> google.protobuf.Timestamp
-	7,   // 174: tachibanapb.ContractStreamResponse.correct_execution_timing:type_name -> tachibanapb.ExecutionTiming
-	13,  // 175: tachibanapb.ContractStreamResponse.correct_execution_type:type_name -> tachibanapb.ExecutionType
-	80,  // 176: tachibanapb.ContractStreamResponse.correct_expire_date:type_name -> google.protobuf.Timestamp
-	9,   // 177: tachibanapb.ContractStreamResponse.correct_stop_order_type:type_name -> tachibanapb.StopOrderType
-	80,  // 178: tachibanapb.NewsStreamResponse.news_datetime:type_name -> google.protobuf.Timestamp
-	80,  // 179: tachibanapb.SystemStatusStreamResponse.update_datetime:type_name -> google.protobuf.Timestamp
-	36,  // 180: tachibanapb.SystemStatusStreamResponse.approval_login:type_name -> tachibanapb.ApprovalLogin
-	37,  // 181: tachibanapb.SystemStatusStreamResponse.system_status:type_name -> tachibanapb.SystemStatus
-	80,  // 182: tachibanapb.OperationStatusStreamResponse.update_datetime:type_name -> google.protobuf.Timestamp
-	5,   // 183: tachibanapb.OperationStatusStreamResponse.exchange:type_name -> tachibanapb.Exchange
-	43,  // 184: tachibanapb.TachibanaService.Login:input_type -> tachibanapb.LoginRequest
-	45,  // 185: tachibanapb.TachibanaService.NewOrder:input_type -> tachibanapb.NewOrderRequest
-	48,  // 186: tachibanapb.TachibanaService.CancelOrder:input_type -> tachibanapb.CancelOrderRequest
-	50,  // 187: tachibanapb.TachibanaService.OrderList:input_type -> tachibanapb.OrderListRequest
-	53,  // 188: tachibanapb.TachibanaService.OrderDetail:input_type -> tachibanapb.OrderDetailRequest
-	57,  // 189: tachibanapb.TachibanaService.StockMaster:input_type -> tachibanapb.StockMasterRequest
-	60,  // 190: tachibanapb.TachibanaService.StockExchangeMaster:input_type -> tachibanapb.StockExchangeMasterRequest
-	63,  // 191: tachibanapb.TachibanaService.MarketPrice:input_type -> tachibanapb.MarketPriceRequest
-	66,  // 192: tachibanapb.TachibanaService.BusinessDay:input_type -> tachibanapb.BusinessDayRequest
-	69,  // 193: tachibanapb.TachibanaService.TickGroup:input_type -> tachibanapb.TickGroupRequest
-	73,  // 194: tachibanapb.TachibanaService.Stream:input_type -> tachibanapb.StreamRequest
-	44,  // 195: tachibanapb.TachibanaService.Login:output_type -> tachibanapb.LoginResponse
-	47,  // 196: tachibanapb.TachibanaService.NewOrder:output_type -> tachibanapb.NewOrderResponse
-	49,  // 197: tachibanapb.TachibanaService.CancelOrder:output_type -> tachibanapb.CancelOrderResponse
-	51,  // 198: tachibanapb.TachibanaService.OrderList:output_type -> tachibanapb.OrderListResponse
-	54,  // 199: tachibanapb.TachibanaService.OrderDetail:output_type -> tachibanapb.OrderDetailResponse
-	58,  // 200: tachibanapb.TachibanaService.StockMaster:output_type -> tachibanapb.StockMasterResponse
-	61,  // 201: tachibanapb.TachibanaService.StockExchangeMaster:output_type -> tachibanapb.StockExchangeMasterResponse
-	64,  // 202: tachibanapb.TachibanaService.MarketPrice:output_type -> tachibanapb.MarketPriceResponse
-	67,  // 203: tachibanapb.TachibanaService.BusinessDay:output_type -> tachibanapb.BusinessDayResponse
-	70,  // 204: tachibanapb.TachibanaService.TickGroup:output_type -> tachibanapb.TickGroupResponse
-	75,  // 205: tachibanapb.TachibanaService.Stream:output_type -> tachibanapb.StreamResponse
-	195, // [195:206] is the sub-list for method output_type
-	184, // [184:195] is the sub-list for method input_type
-	184, // [184:184] is the sub-list for extension type_name
-	184, // [184:184] is the sub-list for extension extendee
-	0,   // [0:184] is the sub-list for field type_name
+	76,  // 156: tachibanapb.StreamResponse.market_price_stream_response:type_name -> tachibanapb.MarketPriceStreamResponse
+	77,  // 157: tachibanapb.StreamResponse.contract_stream_response:type_name -> tachibanapb.ContractStreamResponse
+	78,  // 158: tachibanapb.StreamResponse.news_stream_response:type_name -> tachibanapb.NewsStreamResponse
+	79,  // 159: tachibanapb.StreamResponse.system_status_stream_response:type_name -> tachibanapb.SystemStatusStreamResponse
+	80,  // 160: tachibanapb.StreamResponse.operation_status_stream_response:type_name -> tachibanapb.OperationStatusStreamResponse
+	5,   // 161: tachibanapb.MarketPriceStreamResponse.exchange:type_name -> tachibanapb.Exchange
+	81,  // 162: tachibanapb.MarketPriceStreamResponse.current_price_time:type_name -> google.protobuf.Timestamp
+	31,  // 163: tachibanapb.MarketPriceStreamResponse.change_price_type:type_name -> tachibanapb.ChangePriceType
+	81,  // 164: tachibanapb.MarketPriceStreamResponse.open_price_time:type_name -> google.protobuf.Timestamp
+	81,  // 165: tachibanapb.MarketPriceStreamResponse.high_price_time:type_name -> google.protobuf.Timestamp
+	81,  // 166: tachibanapb.MarketPriceStreamResponse.low_price_time:type_name -> google.protobuf.Timestamp
+	32,  // 167: tachibanapb.MarketPriceStreamResponse.ask_sign:type_name -> tachibanapb.IndicationPriceType
+	32,  // 168: tachibanapb.MarketPriceStreamResponse.bid_sign:type_name -> tachibanapb.IndicationPriceType
+	33,  // 169: tachibanapb.MarketPriceStreamResponse.stop_high:type_name -> tachibanapb.CurrentPriceType
+	33,  // 170: tachibanapb.MarketPriceStreamResponse.stop_low:type_name -> tachibanapb.CurrentPriceType
+	38,  // 171: tachibanapb.ContractStreamResponse.stream_order_type:type_name -> tachibanapb.StreamOrderType
+	81,  // 172: tachibanapb.ContractStreamResponse.execution_date:type_name -> google.protobuf.Timestamp
+	39,  // 173: tachibanapb.ContractStreamResponse.product_type:type_name -> tachibanapb.ProductType
+	5,   // 174: tachibanapb.ContractStreamResponse.exchange:type_name -> tachibanapb.Exchange
+	6,   // 175: tachibanapb.ContractStreamResponse.side:type_name -> tachibanapb.Side
+	8,   // 176: tachibanapb.ContractStreamResponse.trade_type:type_name -> tachibanapb.TradeType
+	7,   // 177: tachibanapb.ContractStreamResponse.execution_timing:type_name -> tachibanapb.ExecutionTiming
+	13,  // 178: tachibanapb.ContractStreamResponse.execution_type:type_name -> tachibanapb.ExecutionType
+	40,  // 179: tachibanapb.ContractStreamResponse.stream_order_status:type_name -> tachibanapb.StreamOrderStatus
+	18,  // 180: tachibanapb.ContractStreamResponse.carry_over_type:type_name -> tachibanapb.CarryOverType
+	41,  // 181: tachibanapb.ContractStreamResponse.cancel_order_status:type_name -> tachibanapb.CancelOrderStatus
+	17,  // 182: tachibanapb.ContractStreamResponse.contract_status:type_name -> tachibanapb.ContractStatus
+	81,  // 183: tachibanapb.ContractStreamResponse.expire_date:type_name -> google.protobuf.Timestamp
+	81,  // 184: tachibanapb.ContractStreamResponse.notify_datetime:type_name -> google.protobuf.Timestamp
+	7,   // 185: tachibanapb.ContractStreamResponse.correct_execution_timing:type_name -> tachibanapb.ExecutionTiming
+	13,  // 186: tachibanapb.ContractStreamResponse.correct_execution_type:type_name -> tachibanapb.ExecutionType
+	81,  // 187: tachibanapb.ContractStreamResponse.correct_expire_date:type_name -> google.protobuf.Timestamp
+	9,   // 188: tachibanapb.ContractStreamResponse.correct_stop_order_type:type_name -> tachibanapb.StopOrderType
+	81,  // 189: tachibanapb.NewsStreamResponse.news_datetime:type_name -> google.protobuf.Timestamp
+	81,  // 190: tachibanapb.SystemStatusStreamResponse.update_datetime:type_name -> google.protobuf.Timestamp
+	36,  // 191: tachibanapb.SystemStatusStreamResponse.approval_login:type_name -> tachibanapb.ApprovalLogin
+	37,  // 192: tachibanapb.SystemStatusStreamResponse.system_status:type_name -> tachibanapb.SystemStatus
+	81,  // 193: tachibanapb.OperationStatusStreamResponse.update_datetime:type_name -> google.protobuf.Timestamp
+	5,   // 194: tachibanapb.OperationStatusStreamResponse.exchange:type_name -> tachibanapb.Exchange
+	43,  // 195: tachibanapb.TachibanaService.Login:input_type -> tachibanapb.LoginRequest
+	45,  // 196: tachibanapb.TachibanaService.NewOrder:input_type -> tachibanapb.NewOrderRequest
+	48,  // 197: tachibanapb.TachibanaService.CancelOrder:input_type -> tachibanapb.CancelOrderRequest
+	50,  // 198: tachibanapb.TachibanaService.OrderList:input_type -> tachibanapb.OrderListRequest
+	53,  // 199: tachibanapb.TachibanaService.OrderDetail:input_type -> tachibanapb.OrderDetailRequest
+	57,  // 200: tachibanapb.TachibanaService.StockMaster:input_type -> tachibanapb.StockMasterRequest
+	60,  // 201: tachibanapb.TachibanaService.StockExchangeMaster:input_type -> tachibanapb.StockExchangeMasterRequest
+	63,  // 202: tachibanapb.TachibanaService.MarketPrice:input_type -> tachibanapb.MarketPriceRequest
+	66,  // 203: tachibanapb.TachibanaService.BusinessDay:input_type -> tachibanapb.BusinessDayRequest
+	69,  // 204: tachibanapb.TachibanaService.TickGroup:input_type -> tachibanapb.TickGroupRequest
+	73,  // 205: tachibanapb.TachibanaService.Stream:input_type -> tachibanapb.StreamRequest
+	44,  // 206: tachibanapb.TachibanaService.Login:output_type -> tachibanapb.LoginResponse
+	47,  // 207: tachibanapb.TachibanaService.NewOrder:output_type -> tachibanapb.NewOrderResponse
+	49,  // 208: tachibanapb.TachibanaService.CancelOrder:output_type -> tachibanapb.CancelOrderResponse
+	51,  // 209: tachibanapb.TachibanaService.OrderList:output_type -> tachibanapb.OrderListResponse
+	54,  // 210: tachibanapb.TachibanaService.OrderDetail:output_type -> tachibanapb.OrderDetailResponse
+	58,  // 211: tachibanapb.TachibanaService.StockMaster:output_type -> tachibanapb.StockMasterResponse
+	61,  // 212: tachibanapb.TachibanaService.StockExchangeMaster:output_type -> tachibanapb.StockExchangeMasterResponse
+	64,  // 213: tachibanapb.TachibanaService.MarketPrice:output_type -> tachibanapb.MarketPriceResponse
+	67,  // 214: tachibanapb.TachibanaService.BusinessDay:output_type -> tachibanapb.BusinessDayResponse
+	70,  // 215: tachibanapb.TachibanaService.TickGroup:output_type -> tachibanapb.TickGroupResponse
+	75,  // 216: tachibanapb.TachibanaService.Stream:output_type -> tachibanapb.StreamResponse
+	206, // [206:217] is the sub-list for method output_type
+	195, // [195:206] is the sub-list for method input_type
+	195, // [195:195] is the sub-list for extension type_name
+	195, // [195:195] is the sub-list for extension extendee
+	0,   // [0:195] is the sub-list for field type_name
 }
 
 func init() { file_tachibanapb_tachibana_proto_init() }
@@ -11225,7 +12051,7 @@ func file_tachibanapb_tachibana_proto_init() {
 			}
 		}
 		file_tachibanapb_tachibana_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ContractStreamResponse); i {
+			switch v := v.(*MarketPriceStreamResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11237,7 +12063,7 @@ func file_tachibanapb_tachibana_proto_init() {
 			}
 		}
 		file_tachibanapb_tachibana_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NewsStreamResponse); i {
+			switch v := v.(*ContractStreamResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11249,7 +12075,7 @@ func file_tachibanapb_tachibana_proto_init() {
 			}
 		}
 		file_tachibanapb_tachibana_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SystemStatusStreamResponse); i {
+			switch v := v.(*NewsStreamResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11261,6 +12087,18 @@ func file_tachibanapb_tachibana_proto_init() {
 			}
 		}
 		file_tachibanapb_tachibana_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemStatusStreamResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_tachibanapb_tachibana_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OperationStatusStreamResponse); i {
 			case 0:
 				return &v.state
@@ -11279,7 +12117,7 @@ func file_tachibanapb_tachibana_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_tachibanapb_tachibana_proto_rawDesc,
 			NumEnums:      42,
-			NumMessages:   38,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

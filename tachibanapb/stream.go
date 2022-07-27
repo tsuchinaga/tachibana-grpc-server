@@ -18,8 +18,21 @@ func (x *StreamRequest) Sendable(res *StreamResponse) bool {
 		return false
 	}
 
-	// TODO 市場価格情報を返すようになったら、参照している銘柄かのチェックが必要
+	// 市場価格情報なら参照している銘柄かのチェック
+	if res.EventType == EventType_EVENT_TYPE_MARKET_PRICE {
+		return x.hasIssue(res.MarketPriceStreamResponse.IssueCode, res.MarketPriceStreamResponse.Exchange)
+	}
+
 	return true
+}
+
+func (x *StreamRequest) hasIssue(issueCode string, exchange Exchange) bool {
+	for _, issue := range x.StreamIssues {
+		if issue.IssueCode == issueCode && issue.Exchange == exchange {
+			return true
+		}
+	}
+	return false
 }
 
 func (x *StreamRequest) Union(res *StreamRequest) *StreamRequest {

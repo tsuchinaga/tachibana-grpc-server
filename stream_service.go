@@ -32,15 +32,16 @@ func (s *streamService) connect(ctx context.Context, session *accountSession, cl
 	sReq := ss.addClient(ctx, clientToken, req, stream, cErrCh)
 
 	// 切断・接続
-	cCtx, cf := context.WithCancel(ctx)
+	cCtx, cf := context.WithCancel(context.Background())
 	resCh, sErrCh := s.tachibanaApi.stream(cCtx, session.Session, sReq)
-	ss.start(cCtx, cf, resCh, sErrCh)
+	ss.start(cCtx, cf, sReq, resCh, sErrCh)
 
 	return <-cErrCh
 }
 
 type sessionStream struct {
 	sessionToken string
+	request      *pb.StreamRequest
 	streams      map[string]iClientStream
 	isConnected  bool
 	resCh        <-chan *pb.StreamResponse
@@ -94,7 +95,7 @@ func (s *sessionStream) getRequest() *pb.StreamRequest {
 	return req
 }
 
-func (s *sessionStream) start(ctx context.Context, cf context.CancelFunc, resCh <-chan *pb.StreamResponse, errCh <-chan error) {
+func (s *sessionStream) start(ctx context.Context, cf context.CancelFunc, request *pb.StreamRequest, resCh <-chan *pb.StreamResponse, errCh <-chan error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -102,6 +103,7 @@ func (s *sessionStream) start(ctx context.Context, cf context.CancelFunc, resCh 
 		s.disconnect()
 	}
 
+	s.request = request
 	s.ctx = ctx
 	s.cf = cf
 	s.resCh = resCh
@@ -129,6 +131,13 @@ func (s *sessionStream) start(ctx context.Context, cf context.CancelFunc, resCh 
 func (s *sessionStream) send(res *pb.StreamResponse) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
+
+	// MarketPriceなら銘柄情報と市場情報を追加する
+	if res.EventType == pb.EventType_EVENT_TYPE_MARKET_PRICE {
+		issue := s.request.StreamIssues[res.MarketPriceStreamResponse.ColumnNumber]
+		res.MarketPriceStreamResponse.IssueCode = issue.IssueCode
+		res.MarketPriceStreamResponse.Exchange = issue.Exchange
+	}
 
 	for _, cs := range s.streams {
 		go cs.send(res)
