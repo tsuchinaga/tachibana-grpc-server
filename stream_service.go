@@ -9,6 +9,7 @@ import (
 
 type iStreamService interface {
 	connect(ctx context.Context, session *accountSession, clientToken string, req *pb.StreamRequest, stream pb.TachibanaService_StreamServer) error
+	clear()
 }
 
 type streamService struct {
@@ -37,6 +38,16 @@ func (s *streamService) connect(ctx context.Context, session *accountSession, cl
 	ss.start(cCtx, cf, sReq, resCh, sErrCh)
 
 	return <-cErrCh
+}
+
+func (s *streamService) clear() {
+	for _, session := range s.sessionStreams {
+		for _, c := range session.streams {
+			c.disconnect(stopStreamErr)
+		}
+		session.disconnect()
+	}
+	s.sessionStreams = map[string]*sessionStream{}
 }
 
 type sessionStream struct {

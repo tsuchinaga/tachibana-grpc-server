@@ -432,3 +432,80 @@ func Test_clientStream_disconnect(t *testing.T) {
 		})
 	}
 }
+
+func Test_streamService_clear(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name                      string
+		sessionStream             map[string]*sessionStream
+		wantOriginalSessionStream map[string]*sessionStream
+		wantAfterSessionStreams   map[string]*sessionStream
+	}{
+		{name: "server, clientのsessionがなければ何もしない",
+			sessionStream:             map[string]*sessionStream{},
+			wantOriginalSessionStream: map[string]*sessionStream{},
+			wantAfterSessionStreams:   map[string]*sessionStream{}},
+		{name: "server, clientのsessionがあれば切断してから消し込む",
+			sessionStream: map[string]*sessionStream{
+				"session1": {
+					sessionToken: "session1",
+					request:      nil,
+					streams:      map[string]iClientStream{"client1": &testClientStream{}, "client2": &testClientStream{}},
+					isConnected:  false,
+					resCh:        nil,
+					errCh:        nil,
+					ctx:          nil,
+					cf:           nil,
+				},
+				"session2": {
+					sessionToken: "session2",
+					request:      nil,
+					streams:      map[string]iClientStream{"client1": &testClientStream{}, "client2": &testClientStream{}},
+					isConnected:  false,
+					resCh:        nil,
+					errCh:        nil,
+					ctx:          nil,
+					cf:           nil,
+				},
+			},
+			wantOriginalSessionStream: map[string]*sessionStream{
+				"session1": {
+					sessionToken: "session1",
+					request:      nil,
+					streams:      map[string]iClientStream{"client1": &testClientStream{disconnectCount: 1, disconnectHistory: []interface{}{stopStreamErr}}, "client2": &testClientStream{disconnectCount: 1, disconnectHistory: []interface{}{stopStreamErr}}},
+					isConnected:  false,
+					resCh:        nil,
+					errCh:        nil,
+					ctx:          nil,
+					cf:           nil,
+				},
+				"session2": {
+					sessionToken: "session2",
+					request:      nil,
+					streams:      map[string]iClientStream{"client1": &testClientStream{disconnectCount: 1, disconnectHistory: []interface{}{stopStreamErr}}, "client2": &testClientStream{disconnectCount: 1, disconnectHistory: []interface{}{stopStreamErr}}},
+					isConnected:  false,
+					resCh:        nil,
+					errCh:        nil,
+					ctx:          nil,
+					cf:           nil,
+				},
+			},
+			wantAfterSessionStreams: map[string]*sessionStream{}},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			streamService := &streamService{sessionStreams: test.sessionStream}
+			streamService.clear()
+			if !reflect.DeepEqual(test.wantOriginalSessionStream, test.sessionStream) || !reflect.DeepEqual(test.wantAfterSessionStreams, streamService.sessionStreams) {
+				t.Errorf("%s error\nresult: %+v, %+v\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(),
+					!reflect.DeepEqual(test.wantOriginalSessionStream, test.sessionStream),
+					!reflect.DeepEqual(test.wantAfterSessionStreams, streamService.sessionStreams),
+					test.wantOriginalSessionStream, test.wantAfterSessionStreams,
+					test.sessionStream, streamService.sessionStreams)
+			}
+		})
+	}
+}
