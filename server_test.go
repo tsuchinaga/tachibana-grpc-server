@@ -334,6 +334,53 @@ func Test_server_OrderList(t *testing.T) {
 	}
 }
 
+func Test_server_OrderDetail(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		sessionStore *testSessionStore
+		tachibanaApi *testTachibanaApi
+		arg1         context.Context
+		arg2         *pb.OrderDetailRequest
+		want1        *pb.OrderDetailResponse
+		hasError     bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore: &testSessionStore{},
+			tachibanaApi: &testTachibanaApi{},
+			arg1:         context.Background(),
+			arg2:         &pb.OrderDetailRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社からエラーがあったらエラーを返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{orderDetail2: unknownErr},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.OrderDetailRequest{},
+			want1:        nil,
+			hasError:     true},
+		{name: "証券会社のレスポンスが返される",
+			sessionStore: &testSessionStore{getByClientToken1: &accountSession{}},
+			tachibanaApi: &testTachibanaApi{orderDetail1: &pb.OrderDetailResponse{ResultCode: "0"}},
+			arg1:         metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001")),
+			arg2:         &pb.OrderDetailRequest{},
+			want1:        &pb.OrderDetailResponse{ResultCode: "0"},
+			hasError:     false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, tachibana: test.tachibanaApi}
+			got1, got2 := server.OrderDetail(test.arg1, test.arg2)
+			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
 func Test_server_StockMaster(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -564,6 +611,49 @@ func Test_server_TickGroup(t *testing.T) {
 			got1, got2 := server.TickGroup(test.arg1, test.arg2)
 			if !reflect.DeepEqual(test.want1, got1) || (got2 != nil) != test.hasError {
 				t.Errorf("%s error\nwant: %+v, %+v\ngot: %+v, %+v\n", t.Name(), test.want1, test.hasError, got1, got2)
+			}
+		})
+	}
+}
+
+func Test_server_Stream(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name          string
+		sessionStore  *testSessionStore
+		streamService *testStreamService
+		arg1          *pb.StreamRequest
+		arg2          pb.TachibanaService_StreamServer
+		hasError      bool
+	}{
+		{name: "ログインに失敗したらエラーを返される",
+			sessionStore:  &testSessionStore{},
+			streamService: &testStreamService{},
+			arg1:          &pb.StreamRequest{},
+			arg2:          &testStreamServer{context1: context.Background()},
+			hasError:      true},
+		{name: "streamでエラーが返されたらエラー",
+			sessionStore:  &testSessionStore{getByClientToken1: &accountSession{}},
+			streamService: &testStreamService{connect1: unknownErr},
+			arg1:          &pb.StreamRequest{},
+			arg2:          &testStreamServer{context1: metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))},
+			hasError:      true},
+		{name: "streamから返されたエラーがnilならnilをそのまま返す",
+			sessionStore:  &testSessionStore{getByClientToken1: &accountSession{}},
+			streamService: &testStreamService{connect1: nil},
+			arg1:          &pb.StreamRequest{},
+			arg2:          &testStreamServer{context1: metadata.NewIncomingContext(context.Background(), metadata.Pairs("session-token", "token001"))},
+			hasError:      false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := &server{sessionStore: test.sessionStore, streamService: test.streamService}
+			got1 := server.Stream(test.arg1, test.arg2)
+			if (got1 != nil) != test.hasError {
+				t.Errorf("%s error\nwant: %+v\ngot: %+v\n", t.Name(), test.hasError, got1)
 			}
 		})
 	}

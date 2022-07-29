@@ -11,12 +11,34 @@ import (
 type testStreamServer struct {
 	send1       error
 	sendHistory []interface{}
+	context1    context.Context
 	pb.TachibanaService_StreamServer
 }
 
 func (t *testStreamServer) Send(response *pb.StreamResponse) error {
 	t.sendHistory = append(t.sendHistory, response)
 	return t.send1
+}
+
+func (t *testStreamServer) Context() context.Context {
+	return t.context1
+}
+
+type testStreamService struct {
+	iStreamService
+	connect1       error
+	connectCount   int
+	connectHistory []interface{}
+	clearCount     int
+}
+
+func (t *testStreamService) connect(ctx context.Context, session *accountSession, clientToken string, req *pb.StreamRequest, stream pb.TachibanaService_StreamServer) error {
+	t.connectCount++
+	t.connectHistory = append(t.connectHistory, ctx, session, clientToken, req, stream)
+	return t.connect1
+}
+func (t *testStreamService) clear() {
+	t.clearCount++
 }
 
 type testClientStream struct {
@@ -204,6 +226,24 @@ func Test_sessionStream_send(t *testing.T) {
 				"client-token001": &testClientStream{sendCount: 1, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_CONTRACT}}},
 				"client-token002": &testClientStream{sendCount: 1, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_CONTRACT}}},
 				"client-token003": &testClientStream{sendCount: 1, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_CONTRACT}}},
+			}},
+		{name: "時価情報なら、銘柄情報を追加する",
+			sessionStream: &sessionStream{
+				request: &pb.StreamRequest{StreamIssues: []*pb.StreamIssue{
+					{IssueCode: "1111", Exchange: pb.Exchange_EXCHANGE_TOUSHOU},
+					{IssueCode: "2222", Exchange: pb.Exchange_EXCHANGE_TOUSHOU},
+					{IssueCode: "3333", Exchange: pb.Exchange_EXCHANGE_TOUSHOU},
+				}},
+				streams: map[string]iClientStream{
+					"client-token001": &testClientStream{},
+					"client-token002": &testClientStream{},
+					"client-token003": &testClientStream{},
+				}},
+			arg1: &pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{ColumnNumber: 2}},
+			wantStreams: map[string]iClientStream{
+				"client-token001": &testClientStream{sendCount: 1, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{ColumnNumber: 2, IssueCode: "2222", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}}},
+				"client-token002": &testClientStream{sendCount: 1, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{ColumnNumber: 2, IssueCode: "2222", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}}},
+				"client-token003": &testClientStream{sendCount: 1, sendHistory: []interface{}{&pb.StreamResponse{EventType: pb.EventType_EVENT_TYPE_MARKET_PRICE, MarketPriceStreamResponse: &pb.MarketPriceStreamResponse{ColumnNumber: 2, IssueCode: "2222", Exchange: pb.Exchange_EXCHANGE_TOUSHOU}}}},
 			}},
 	}
 
