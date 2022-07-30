@@ -88,7 +88,7 @@ func Test_StreamRequest_Union(t *testing.T) {
 				EventTypes:   []EventType{EventType_EVENT_TYPE_CONTRACT, EventType_EVENT_TYPE_OPERATION_STATUS},
 				StreamIssues: []*StreamIssue{{IssueCode: "1475", Exchange: Exchange_EXCHANGE_MEISHOU}, {IssueCode: "1477", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1478", Exchange: Exchange_EXCHANGE_TOUSHOU}}},
 			want1: &StreamRequest{EventTypes: []EventType{EventType_EVENT_TYPE_CONTRACT, EventType_EVENT_TYPE_ERROR_STATUS, EventType_EVENT_TYPE_OPERATION_STATUS},
-				StreamIssues: []*StreamIssue{{IssueCode: "1475", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1476", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1475", Exchange: Exchange_EXCHANGE_MEISHOU}, {IssueCode: "1477", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1478", Exchange: Exchange_EXCHANGE_TOUSHOU}}}},
+				StreamIssues: []*StreamIssue{{IssueCode: "1475", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1476", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1478", Exchange: Exchange_EXCHANGE_TOUSHOU}, {IssueCode: "1475", Exchange: Exchange_EXCHANGE_MEISHOU}, {IssueCode: "1477", Exchange: Exchange_EXCHANGE_TOUSHOU}}}},
 	}
 
 	for _, test := range tests {
